@@ -265,40 +265,14 @@ body.dark-mode .list-table th{
 }
 body.dark-mode .list-table tr:hover{background:rgba(255, 255, 255, 0.05) !important;}
 body.dark-mode .header h1 span{color:#FF7A00 !important;}
-
-/* 📊 BI Insights Dashboard */
-body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
-  background:var(--surface) !important;
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-  border-color:var(--border) !important;
-}
-.bi-panel{background:var(--surface2);border-bottom:1px solid var(--border);padding:24px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;transition:all .3s;}
-.bi-panel.hidden{display:none;}
-.bi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;}
-.bi-card-title{font-family:'Instrument Serif',serif;font-size:19px;font-weight:400;color:var(--text);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:10px;}
-.bi-card-title span{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:400;}
-.bi-metric-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);}
-.bi-metric-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text);}
-.bi-bar-wrap{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:4px;}
-.bi-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.bi-list-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:13px;}
-.bi-list-item:last-child{border-bottom:none;}
-.bi-vip-card{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;}
-.bi-vip-card:hover{border-color:var(--claude);transform:translateX(3px);box-shadow:var(--shadow);}
-.bi-vip-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--claude),var(--claude-dark));color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0;overflow:hidden;}
-.bi-vip-av img{width:100%;height:100%;object-fit:cover;}
-.bi-vip-info{flex:1;min-width:0;}
-.bi-vip-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;}
-.bi-vip-meta{font-size:11.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
-.bi-vip-badges{display:flex;gap:4px;}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench <small style="font-size:12px;color:var(--accent);font-style:normal;vertical-align:middle;margin-left:6px;padding:2px 6px;background:rgba(37,211,102,0.1);border-radius:6px;border:1px solid rgba(37,211,102,0.3)">v2.7 终极防屏蔽版</small></span></h1></div>
+  <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench</span></h1></div>
   <div class="header-actions">
     <button class="btn" onclick="toggleTheme()" title="切换深海黄昏/日间模式">🌅 <span id="themeText">黄昏模式</span></button>
-    <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv,.txt,.tsv,*/*" multiple hidden id="fileInput"></label>
+    <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv" multiple hidden id="fileInput"></label>
     <div class="export-wrap" id="exportWrap">
       <button class="btn" onclick="toggleExport(event)">📥 导出</button>
       <div class="export-menu">
@@ -324,13 +298,11 @@ body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
   <select class="filter-select" id="fContact"><option value="">联系方式</option><option value="wa">有WhatsApp</option><option value="em">有邮箱</option><option value="ph">有电话</option><option value="web">有网站</option></select>
   <select class="filter-select" id="fSort"><option value="score">按评分</option><option value="followers">按粉丝</option><option value="posts">按帖子</option><option value="name">按名称</option></select>
   <span class="filter-count" id="filterCount"></span>
-  <button class="btn" id="btnToggleBI" onclick="toggleBIPanel()" style="margin-left:auto;border-color:var(--claude);color:var(--claude-dark);font-weight:700">📊 智能 BI 画像</button>
-  <button class="btn" id="btnToggleGeo" onclick="toggleGeoPanel()">🌍 国家筛选</button>
+  <button class="btn" id="btnToggleGeo" onclick="toggleGeoPanel()" style="margin-left:auto">🌍 国家筛选</button>
   <button class="btn" id="btnToggleVcf" onclick="toggleVcfPanel()">📇 VCF 导出</button>
   <div class="view-toggle"><button class="active" id="vCard" onclick="setView('card')" title="卡片视图">📇</button><button id="vList" onclick="setView('list')" title="列表视图">☰</button></div>
 </div>
 <div class="file-tags" id="fileTags"></div>
-<div class="bi-panel hidden" id="biPanel"></div>
 <div class="geo-panel hidden" id="geoPanel">
   <div class="geo-toolbar">
     <button class="btn-sm" onclick="geoAll()">全选</button>
@@ -355,7 +327,7 @@ body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
     <button class="vcf-btn vcf-btn-alt" id="btnVcfAll" onclick="downloadVcfAll()" disabled>全部下载为一个 VCF</button>
   </div>
 </div>
-<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" title="点击或拖拽文件导入"><div style="font-size:40px;margin-bottom:12px">📁</div><h2>拖拽文件到这里，或点击此处/上方导入</h2><p>支持 .xlsx / .xls / .csv，可多次导入自动合并去重</p></div>
+<div class="drop-zone" id="dropZone"><div style="font-size:40px;margin-bottom:12px">📁</div><h2>拖拽文件到这里，或点击上方导入</h2><p>支持 .xlsx / .xls / .csv，可多次导入自动合并去重</p></div>
 <div class="cards active" id="grid"></div>
 <div class="list-wrap" id="listWrap">
   <table class="list-table">
@@ -442,108 +414,9 @@ function copyWaNum(ev,text,rowEl){
   }).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();});
 }
 
-function getVal(r, keys){
-  const clean = s => String(s).replace(/^[\uFEFF\s]+|[\s\uFEFF]+$/g, '').replace(/^["']|["']$/g, '').trim().toLowerCase();
-  for(const k of keys){
-    if(r[k] !== undefined && r[k] !== null && r[k] !== '') return r[k];
-    const target = clean(k);
-    for(const rk of Object.keys(r)){
-      if(clean(rk) === target){
-        if(r[rk] !== undefined && r[rk] !== null && r[rk] !== '') return r[rk];
-      }
-    }
-  }
-  return '';
-}
+function norm(r,src){const c={id:r['User ID']||r['user_id']||Math.random().toString(36).slice(2),username:r['Username']||r['username']||'',fullname:r['Fullname']||r['fullname']||r['Full Name']||'',posts:parseInt(r['Posts']||r['posts'])||0,followers:parseInt(r['Followers']||r['followers'])||0,email:r['Email']||r['email']||'',phoneCode:r['Phone Country Code']||r['phone_country_code']||'',phone:r['Phone']||r['phone']||'',city:r['City']||r['city']||'',verified:(r['Is verified']||'').toString().toUpperCase()==='YES',isBiz:(r['Is Business']||'').toString().toUpperCase()==='YES',website:r['External URL']||r['external_url']||'',profileUrl:r['Profile URL']||r['profile_url']||'',avatarUrl:r['Avatar URL']||r['avatar_url']||'',bio:r['Biography']||r['biography']||'',category:r['Category']||r['category']||'',whatsapp:r['whatsapp_number']||r['whatsapp']||'',src,status:'未联系'};c.role=c.category||'未分类';c.country=detectCountry(c.phoneCode,c.phone||c.whatsapp);c.region=getRegion(c.country);c.score=score(c);return c;}
 
-function norm(r,src){
-  const idVal = getVal(r, ['User ID','user_id','id','ID','用户ID','用户 ID','序号']);
-  const usernameVal = String(getVal(r, ['Username','username','用户名','账号','IG用户名','instagram_username'])).trim();
-  const emailVal = String(getVal(r, ['Email','email','E-mail','电子邮箱','邮箱','邮件'])).trim();
-  const phoneVal = String(getVal(r, ['Phone','phone','电话','手机','电话号码','手机号','联系电话'])).trim();
-  const detId = usernameVal ? 'ig_' + usernameVal.toLowerCase() : (emailVal ? 'em_' + emailVal.toLowerCase() : (phoneVal ? 'ph_' + phoneVal : Math.random().toString(36).slice(2)));
-  const c = {
-    id: idVal ? String(idVal) : detId,
-    username: usernameVal,
-    fullname: String(getVal(r, ['Fullname','fullname','Full Name','full_name','全名','姓名','名称','名字'])).trim(),
-    posts: parseInt(String(getVal(r, ['Posts','posts','发帖数','帖子','发文'])).replace(/,/g,'')) || 0,
-    followers: parseInt(String(getVal(r, ['Followers','followers','粉丝','粉丝数','粉'])).replace(/,/g,'')) || 0,
-    email: emailVal,
-    phoneCode: String(getVal(r, ['Phone Country Code','phone_country_code','区号','国家区号','电话区号'])).trim(),
-    phone: phoneVal,
-    city: String(getVal(r, ['City','city','城市','所在地','地点'])).trim(),
-    verified: /^(YES|TRUE|是|1|T)$/i.test(String(getVal(r, ['Is verified','is_verified','verified','是否认证','认证','蓝V'])).trim()),
-    isBiz: /^(YES|TRUE|是|1|T)$/i.test(String(getVal(r, ['Is Business','is_business','business','企业','是否企业号','商业号','企业号'])).trim()),
-    website: String(getVal(r, ['External URL','external_url','website','url','外链','官网','网站','个人网站'])).trim(),
-    profileUrl: String(getVal(r, ['Profile URL','profile_url','IG链接','主页链接','主页','Instagram','instagram'])).trim(),
-    avatarUrl: String(getVal(r, ['Avatar URL','avatar_url','头像','头像链接','头像URL'])).trim(),
-    bio: String(getVal(r, ['Biography','biography','bio','简介','个人简介','签名','描述'])).trim(),
-    category: String(getVal(r, ['Category','category','role','类型','赛道','分类','品类','行业'])).trim(),
-    whatsapp: String(getVal(r, ['whatsapp_number','whatsapp','WhatsApp','WhatsApp号码','WA','wa'])).trim(),
-    src,
-    status: String(getVal(r, ['status','状态','开发状态','跟进状态']) || '未联系').trim()
-  };
-  c.role = c.category || getVal(r, ['类型','分类']) || '未分类';
-  c.country = getVal(r, ['Country','country','国家','所在国家']) || detectCountry(c.phoneCode, c.phone || c.whatsapp);
-  c.region = getVal(r, ['Region','region','区域','地区','大区']) || getRegion(c.country);
-  c.score = score(c);
-  return c;
-}
-
-async function load(files){
-  let totalReadCount = 0;
-  let totalNewCount = 0;
-  let lastFileName = '';
-  for(const f of files){
-    lastFileName = f.name;
-    try{
-      const buf=await f.arrayBuffer();
-      let wb;
-      try{
-        wb=XLSX.read(buf,{type:'array'});
-      }catch(err){
-        const txt=await f.text();
-        wb=XLSX.read(txt,{type:'string'});
-      }
-      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
-      totalReadCount += rows.length;
-      const ids=new Set(D.map(c=>c.id));
-      let n=0;
-      rows.forEach(r=>{
-        const c=norm(r,f.name);
-        if(!ids.has(c.id)){
-          D.push(c);
-          ids.add(c.id);
-          n++;
-        }
-      });
-      totalNewCount += n;
-      FM[f.name]=(FM[f.name]||0)+n;
-    }catch(e){
-      console.error('Load file error:', e);
-      alert('文件解析失败 ['+f.name+']: 请检查表格格式\n错误信息: '+(e.message||e));
-    }
-  }
-  
-  // 1. 强制重置所有筛选条件，确保导入或已有的数据100%无死角呈现！
-  const searchBox = document.getElementById('searchBox'); if(searchBox) searchBox.value = '';
-  const fStatus = document.getElementById('fStatus'); if(fStatus) fStatus.value = '';
-  const fRole = document.getElementById('fRole'); if(fRole) fRole.value = '';
-  const fContact = document.getElementById('fContact'); if(fContact) fContact.value = '';
-  const fSort = document.getElementById('fSort'); if(fSort) fSort.value = 'score';
-  
-  // 2. 强制确保地理位置筛选全选
-  selCountries = new Set(D.map(c=>c.country).filter(Boolean));
-  selNoCountry = true;
-  geoInited = true;
-  
-  saveLS();
-  render();
-  
-  // 3. 弹窗清晰报告结果
-  const dups = totalReadCount - totalNewCount;
-  alert(`🎉 表格导入解析完成！\n\n📁 文件：${lastFileName}\n📊 读取表格数据：共 ${totalReadCount} 条\n✨ 新增客户：${totalNewCount} 条\n♻️ 自动去重：${dups} 条（该表格数据先前已存在于工作台）\n\n📈 当前工作台共展示：${D.length} 条客户数据！\n（注：系统已自动重置所有筛选条件，确保数据100%完整展示）`);
-}
+async function load(files){for(const f of files){try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});const ids=new Set(D.map(c=>c.id));let n=0;rows.forEach(r=>{const c=norm(r,f.name);if(!ids.has(c.id)){D.push(c);ids.add(c.id);n++;if(c.country)selCountries.add(c.country);}});FM[f.name]=(FM[f.name]||0)+n;}catch(e){alert('解析失败: '+f.name);}}geoInited=true;saveLS();render();}
 
 function render(){
   const has=D.length>0;
@@ -561,7 +434,6 @@ function render(){
   fR.innerHTML='<option value="">全部类型</option>'+cats.map(c=>`<option${c===curV?' selected':''}>${c}</option>`).join('');
   renderGeoPanel();
   renderVcfPanel();
-  renderBIDashboard();
   cards();
 }
 
@@ -721,7 +593,7 @@ document.querySelectorAll('.status-select').forEach(s=>{s.disabled=true;s.style.
 document.getElementById('fileInput').addEventListener('change',e=>{load(e.target.files);e.target.value='';});
 document.body.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropZone').classList.add('dragover');});
 document.body.addEventListener('dragleave',()=>document.getElementById('dropZone').classList.remove('dragover'));
-document.body.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const fs=[...e.dataTransfer.files];if(fs.length)load(fs);});
+document.body.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const fs=[...e.dataTransfer.files].filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));if(fs.length)load(fs);});
 ['searchBox','fStatus','fRole','fContact','fSort'].forEach(id=>document.getElementById(id).addEventListener(id==='searchBox'?'input':'change',cards));
 
 function toggleGeoPanel(){
@@ -954,121 +826,6 @@ function toggleVcfPanel(){
   const btn=document.getElementById('btnToggleVcf');
   btn.classList.toggle('geo-active-tag',!p.classList.contains('hidden'));
   if(!p.classList.contains('hidden'))renderVcfPanel();
-}
-
-function toggleBIPanel(){
-  const p=document.getElementById('biPanel');
-  p.classList.toggle('hidden');
-  const btn=document.getElementById('btnToggleBI');
-  btn.classList.toggle('geo-active-tag',!p.classList.contains('hidden'));
-  if(!p.classList.contains('hidden')) renderBIDashboard();
-}
-
-function renderBIDashboard(){
-  const p=document.getElementById('biPanel');
-  if(!p||p.classList.contains('hidden'))return;
-  if(!D||!D.length){
-    p.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:14px">💡 请先导入或载入 Excel/CSV 表格数据后，开启智能 BI 画像与客户深度分析</div>';
-    return;
-  }
-  const tot=D.length;
-  // 1. Channel & Gold Leads
-  const gold=D.filter(c=>c.email||c.phone||c.whatsapp).length;
-  const wa=D.filter(c=>waNum(c)).length;
-  const em=D.filter(c=>c.email).length;
-  const web=D.filter(c=>c.website).length;
-  const biz=D.filter(c=>c.isBiz).length;
-  
-  // 2. Top Countries
-  const cMap={};
-  D.forEach(c=>{const k=c.country||'未标记国家';cMap[k]=(cMap[k]||0)+1;});
-  const topC=Object.entries(cMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  
-  // 3. Top Roles
-  const rMap={};
-  D.forEach(c=>{const k=c.role||'未分类';rMap[k]=(rMap[k]||0)+1;});
-  const topR=Object.entries(rMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  
-  // 4. Top VIP Prospects
-  const vips=[...D].sort((a,b)=>(b.followers*b.score)-(a.followers*a.score)).slice(0,5);
-  
-  p.innerHTML=`
-    <div class="bi-card">
-      <div class="bi-card-title">💎 纯金线索与触达渠道 <span>共 ${tot} 人</span></div>
-      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
-        <div>
-          <div class="bi-metric-row"><span>🌟 有联系方式 (金线索)</span><span class="bi-metric-val">${gold} (${Math.round(gold/tot*100)}%)</span></div>
-          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${gold/tot*100}%;background:linear-gradient(90deg,#FF7A00,#EE0979)"></div></div>
-        </div>
-        <div>
-          <div class="bi-metric-row"><span>💬 有 WhatsApp 账号</span><span class="bi-metric-val">${wa} (${Math.round(wa/tot*100)}%)</span></div>
-          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${wa/tot*100}%;background:#25D366"></div></div>
-        </div>
-        <div>
-          <div class="bi-metric-row"><span>📧 有电子邮箱</span><span class="bi-metric-val">${em} (${Math.round(em/tot*100)}%)</span></div>
-          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${em/tot*100}%;background:#5B7FD4"></div></div>
-        </div>
-        <div>
-          <div class="bi-metric-row"><span>🌐 自带官网/外链</span><span class="bi-metric-val">${web} (${Math.round(web/tot*100)}%)</span></div>
-          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${web/tot*100}%;background:#9B7FD4"></div></div>
-        </div>
-        <div>
-          <div class="bi-metric-row"><span>🏢 认证/企业商业账号</span><span class="bi-metric-val">${biz} (${Math.round(biz/tot*100)}%)</span></div>
-          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${biz/tot*100}%;background:#D4955B"></div></div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bi-card">
-      <div class="bi-card-title">🌍 重点国家与市场分布 <span>TOP 5</span></div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
-        ${topC.map(([name,cnt],idx)=>{
-          const pct=Math.round(cnt/tot*100);
-          const cols=['#FF7A00','#5B7FD4','#25D366','#9B7FD4','#D4955B'];
-          return \`<div>
-            <div class="bi-metric-row"><span style="font-weight:500;color:var(--text)">\${idx+1}. \${esc(name)}</span><span class="bi-metric-val">\${cnt} (\${pct}%)</span></div>
-            <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:\${pct}%;background:\${cols[idx%cols.length]}"></div></div>
-          </div>\`;
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="bi-card">
-      <div class="bi-card-title">👑 行业 KOP/高价值大买家 <span>重点攻克</span></div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
-        ${vips.map(c=>{
-          const ini=(c.fullname||c.username||'?')[0].toUpperCase();
-          const w=waNum(c);
-          return \`<div class="bi-vip-card" onclick="document.getElementById('searchBox').value='\${esc(c.username)}';cards();window.scrollTo({top:document.getElementById('toolbar').offsetTop,behavior:'smooth'});" title="点击直接定位该客户">
-            <div class="bi-vip-av">\${c.avatarUrl?\`<img loading="lazy" src="https://wsrv.nl/?url=\${encodeURIComponent(c.avatarUrl)}&w=80&h=80&fit=cover&default=1" onerror="this.remove()">\`:''}\${ini}</div>
-            <div class="bi-vip-info">
-              <div class="bi-vip-name">\${esc(c.fullname||c.username)} <span style="color:var(--text3);font-size:11px">@\${esc(c.username)}</span></div>
-              <div class="bi-vip-meta">🔥 \${fmt(c.followers)} 粉丝 · 评分 \${c.score}</div>
-            </div>
-            <div class="bi-vip-badges">
-              \${w?'<span style="font-size:12px" title="有WhatsApp">💬</span>':''}
-              \${c.email?'<span style="font-size:12px" title="有邮箱">📧</span>':''}
-              \${c.website?'<span style="font-size:12px" title="有官网">🌐</span>':''}
-            </div>
-          </div>\`;
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="bi-card">
-      <div class="bi-card-title">📈 赛道品类分布 <span>TOP 5</span></div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
-        ${topR.map(([name,cnt],idx)=>{
-          const pct=Math.round(cnt/tot*100);
-          const cols=['#9B7FD4','#D4955B','#5B7FD4','#FF7A00','#25D366'];
-          return \`<div>
-            <div class="bi-metric-row"><span style="font-weight:500;color:var(--text)">\${idx+1}. \${esc(name)}</span><span class="bi-metric-val">\${cnt} (\${pct}%)</span></div>
-            <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:\${pct}%;background:\${cols[idx%cols.length]}"></div></div>
-          </div>\`;
-        }).join('')}
-      </div>
-    </div>
-  \`;
 }
 
 
