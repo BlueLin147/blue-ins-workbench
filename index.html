@@ -265,6 +265,32 @@ body.dark-mode .list-table th{
 }
 body.dark-mode .list-table tr:hover{background:rgba(255, 255, 255, 0.05) !important;}
 body.dark-mode .header h1 span{color:#FF7A00 !important;}
+
+/* 📊 BI Insights Dashboard */
+body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
+  background:var(--surface) !important;
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border-color:var(--border) !important;
+}
+.bi-panel{background:var(--surface2);border-bottom:1px solid var(--border);padding:24px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;transition:all .3s;}
+.bi-panel.hidden{display:none;}
+.bi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;}
+.bi-card-title{font-family:'Instrument Serif',serif;font-size:19px;font-weight:400;color:var(--text);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:10px;}
+.bi-card-title span{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:400;}
+.bi-metric-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);}
+.bi-metric-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text);}
+.bi-bar-wrap{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:4px;}
+.bi-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.bi-list-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:13px;}
+.bi-list-item:last-child{border-bottom:none;}
+.bi-vip-card{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;}
+.bi-vip-card:hover{border-color:var(--claude);transform:translateX(3px);box-shadow:var(--shadow);}
+.bi-vip-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--claude),var(--claude-dark));color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0;overflow:hidden;}
+.bi-vip-av img{width:100%;height:100%;object-fit:cover;}
+.bi-vip-info{flex:1;min-width:0;}
+.bi-vip-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;}
+.bi-vip-meta{font-size:11.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.bi-vip-badges{display:flex;gap:4px;}
 </style>
 </head>
 <body>
@@ -298,11 +324,13 @@ body.dark-mode .header h1 span{color:#FF7A00 !important;}
   <select class="filter-select" id="fContact"><option value="">联系方式</option><option value="wa">有WhatsApp</option><option value="em">有邮箱</option><option value="ph">有电话</option><option value="web">有网站</option></select>
   <select class="filter-select" id="fSort"><option value="score">按评分</option><option value="followers">按粉丝</option><option value="posts">按帖子</option><option value="name">按名称</option></select>
   <span class="filter-count" id="filterCount"></span>
-  <button class="btn" id="btnToggleGeo" onclick="toggleGeoPanel()" style="margin-left:auto">🌍 国家筛选</button>
+  <button class="btn" id="btnToggleBI" onclick="toggleBIPanel()" style="margin-left:auto;border-color:var(--claude);color:var(--claude-dark);font-weight:700">📊 智能 BI 画像</button>
+  <button class="btn" id="btnToggleGeo" onclick="toggleGeoPanel()">🌍 国家筛选</button>
   <button class="btn" id="btnToggleVcf" onclick="toggleVcfPanel()">📇 VCF 导出</button>
   <div class="view-toggle"><button class="active" id="vCard" onclick="setView('card')" title="卡片视图">📇</button><button id="vList" onclick="setView('list')" title="列表视图">☰</button></div>
 </div>
 <div class="file-tags" id="fileTags"></div>
+<div class="bi-panel hidden" id="biPanel"></div>
 <div class="geo-panel hidden" id="geoPanel">
   <div class="geo-toolbar">
     <button class="btn-sm" onclick="geoAll()">全选</button>
@@ -434,6 +462,7 @@ function render(){
   fR.innerHTML='<option value="">全部类型</option>'+cats.map(c=>`<option${c===curV?' selected':''}>${c}</option>`).join('');
   renderGeoPanel();
   renderVcfPanel();
+  renderBIDashboard();
   cards();
 }
 
@@ -826,6 +855,121 @@ function toggleVcfPanel(){
   const btn=document.getElementById('btnToggleVcf');
   btn.classList.toggle('geo-active-tag',!p.classList.contains('hidden'));
   if(!p.classList.contains('hidden'))renderVcfPanel();
+}
+
+function toggleBIPanel(){
+  const p=document.getElementById('biPanel');
+  p.classList.toggle('hidden');
+  const btn=document.getElementById('btnToggleBI');
+  btn.classList.toggle('geo-active-tag',!p.classList.contains('hidden'));
+  if(!p.classList.contains('hidden')) renderBIDashboard();
+}
+
+function renderBIDashboard(){
+  const p=document.getElementById('biPanel');
+  if(!p||p.classList.contains('hidden'))return;
+  if(!D||!D.length){
+    p.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:14px">💡 请先导入或载入 Excel/CSV 表格数据后，开启智能 BI 画像与客户深度分析</div>';
+    return;
+  }
+  const tot=D.length;
+  // 1. Channel & Gold Leads
+  const gold=D.filter(c=>c.email||c.phone||c.whatsapp).length;
+  const wa=D.filter(c=>waNum(c)).length;
+  const em=D.filter(c=>c.email).length;
+  const web=D.filter(c=>c.website).length;
+  const biz=D.filter(c=>c.isBiz).length;
+  
+  // 2. Top Countries
+  const cMap={};
+  D.forEach(c=>{const k=c.country||'未标记国家';cMap[k]=(cMap[k]||0)+1;});
+  const topC=Object.entries(cMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  
+  // 3. Top Roles
+  const rMap={};
+  D.forEach(c=>{const k=c.role||'未分类';rMap[k]=(rMap[k]||0)+1;});
+  const topR=Object.entries(rMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  
+  // 4. Top VIP Prospects
+  const vips=[...D].sort((a,b)=>(b.followers*b.score)-(a.followers*a.score)).slice(0,5);
+  
+  p.innerHTML=`
+    <div class="bi-card">
+      <div class="bi-card-title">💎 纯金线索与触达渠道 <span>共 ${tot} 人</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+        <div>
+          <div class="bi-metric-row"><span>🌟 有联系方式 (金线索)</span><span class="bi-metric-val">${gold} (${Math.round(gold/tot*100)}%)</span></div>
+          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${gold/tot*100}%;background:linear-gradient(90deg,#FF7A00,#EE0979)"></div></div>
+        </div>
+        <div>
+          <div class="bi-metric-row"><span>💬 有 WhatsApp 账号</span><span class="bi-metric-val">${wa} (${Math.round(wa/tot*100)}%)</span></div>
+          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${wa/tot*100}%;background:#25D366"></div></div>
+        </div>
+        <div>
+          <div class="bi-metric-row"><span>📧 有电子邮箱</span><span class="bi-metric-val">${em} (${Math.round(em/tot*100)}%)</span></div>
+          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${em/tot*100}%;background:#5B7FD4"></div></div>
+        </div>
+        <div>
+          <div class="bi-metric-row"><span>🌐 自带官网/外链</span><span class="bi-metric-val">${web} (${Math.round(web/tot*100)}%)</span></div>
+          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${web/tot*100}%;background:#9B7FD4"></div></div>
+        </div>
+        <div>
+          <div class="bi-metric-row"><span>🏢 认证/企业商业账号</span><span class="bi-metric-val">${biz} (${Math.round(biz/tot*100)}%)</span></div>
+          <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:${biz/tot*100}%;background:#D4955B"></div></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bi-card">
+      <div class="bi-card-title">🌍 重点国家与市场分布 <span>TOP 5</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+        ${topC.map(([name,cnt],idx)=>{
+          const pct=Math.round(cnt/tot*100);
+          const cols=['#FF7A00','#5B7FD4','#25D366','#9B7FD4','#D4955B'];
+          return \`<div>
+            <div class="bi-metric-row"><span style="font-weight:500;color:var(--text)">\${idx+1}. \${esc(name)}</span><span class="bi-metric-val">\${cnt} (\${pct}%)</span></div>
+            <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:\${pct}%;background:\${cols[idx%cols.length]}"></div></div>
+          </div>\`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="bi-card">
+      <div class="bi-card-title">👑 行业 KOP/高价值大买家 <span>重点攻克</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        ${vips.map(c=>{
+          const ini=(c.fullname||c.username||'?')[0].toUpperCase();
+          const w=waNum(c);
+          return \`<div class="bi-vip-card" onclick="document.getElementById('searchBox').value='\${esc(c.username)}';cards();window.scrollTo({top:document.getElementById('toolbar').offsetTop,behavior:'smooth'});" title="点击直接定位该客户">
+            <div class="bi-vip-av">\${c.avatarUrl?\`<img loading="lazy" src="https://wsrv.nl/?url=\${encodeURIComponent(c.avatarUrl)}&w=80&h=80&fit=cover&default=1" onerror="this.remove()">\`:''}\${ini}</div>
+            <div class="bi-vip-info">
+              <div class="bi-vip-name">\${esc(c.fullname||c.username)} <span style="color:var(--text3);font-size:11px">@\${esc(c.username)}</span></div>
+              <div class="bi-vip-meta">🔥 \${fmt(c.followers)} 粉丝 · 评分 \${c.score}</div>
+            </div>
+            <div class="bi-vip-badges">
+              \${w?'<span style="font-size:12px" title="有WhatsApp">💬</span>':''}
+              \${c.email?'<span style="font-size:12px" title="有邮箱">📧</span>':''}
+              \${c.website?'<span style="font-size:12px" title="有官网">🌐</span>':''}
+            </div>
+          </div>\`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="bi-card">
+      <div class="bi-card-title">📈 赛道品类分布 <span>TOP 5</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+        ${topR.map(([name,cnt],idx)=>{
+          const pct=Math.round(cnt/tot*100);
+          const cols=['#9B7FD4','#D4955B','#5B7FD4','#FF7A00','#25D366'];
+          return \`<div>
+            <div class="bi-metric-row"><span style="font-weight:500;color:var(--text)">\${idx+1}. \${esc(name)}</span><span class="bi-metric-val">\${cnt} (\${pct}%)</span></div>
+            <div class="bi-bar-wrap"><div class="bi-bar-fill" style="width:\${pct}%;background:\${cols[idx%cols.length]}"></div></div>
+          </div>\`;
+        }).join('')}
+      </div>
+    </div>
+  \`;
 }
 
 
