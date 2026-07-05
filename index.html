@@ -355,7 +355,7 @@ body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
     <button class="vcf-btn vcf-btn-alt" id="btnVcfAll" onclick="downloadVcfAll()" disabled>全部下载为一个 VCF</button>
   </div>
 </div>
-<div class="drop-zone" id="dropZone"><div style="font-size:40px;margin-bottom:12px">📁</div><h2>拖拽文件到这里，或点击上方导入</h2><p>支持 .xlsx / .xls / .csv，可多次导入自动合并去重</p></div>
+<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" title="点击或拖拽文件导入"><div style="font-size:40px;margin-bottom:12px">📁</div><h2>拖拽文件到这里，或点击此处/上方导入</h2><p>支持 .xlsx / .xls / .csv，可多次导入自动合并去重</p></div>
 <div class="cards active" id="grid"></div>
 <div class="list-wrap" id="listWrap">
   <table class="list-table">
@@ -442,9 +442,81 @@ function copyWaNum(ev,text,rowEl){
   }).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();});
 }
 
-function norm(r,src){const c={id:r['User ID']||r['user_id']||Math.random().toString(36).slice(2),username:r['Username']||r['username']||'',fullname:r['Fullname']||r['fullname']||r['Full Name']||'',posts:parseInt(r['Posts']||r['posts'])||0,followers:parseInt(r['Followers']||r['followers'])||0,email:r['Email']||r['email']||'',phoneCode:r['Phone Country Code']||r['phone_country_code']||'',phone:r['Phone']||r['phone']||'',city:r['City']||r['city']||'',verified:(r['Is verified']||'').toString().toUpperCase()==='YES',isBiz:(r['Is Business']||'').toString().toUpperCase()==='YES',website:r['External URL']||r['external_url']||'',profileUrl:r['Profile URL']||r['profile_url']||'',avatarUrl:r['Avatar URL']||r['avatar_url']||'',bio:r['Biography']||r['biography']||'',category:r['Category']||r['category']||'',whatsapp:r['whatsapp_number']||r['whatsapp']||'',src,status:'未联系'};c.role=c.category||'未分类';c.country=detectCountry(c.phoneCode,c.phone||c.whatsapp);c.region=getRegion(c.country);c.score=score(c);return c;}
+function getVal(r, keys){
+  for(const k of keys){
+    if(r[k] !== undefined && r[k] !== null && r[k] !== '') return r[k];
+    for(const rk of Object.keys(r)){
+      if(rk.trim().toLowerCase() === k.toLowerCase()){
+        if(r[rk] !== undefined && r[rk] !== null && r[rk] !== '') return r[rk];
+      }
+    }
+  }
+  return '';
+}
 
-async function load(files){for(const f of files){try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});const ids=new Set(D.map(c=>c.id));let n=0;rows.forEach(r=>{const c=norm(r,f.name);if(!ids.has(c.id)){D.push(c);ids.add(c.id);n++;if(c.country)selCountries.add(c.country);}});FM[f.name]=(FM[f.name]||0)+n;}catch(e){alert('解析失败: '+f.name);}}geoInited=true;saveLS();render();}
+function norm(r,src){
+  const idVal = getVal(r, ['User ID','user_id','id','ID','用户ID','用户 ID','序号']);
+  const c = {
+    id: idVal ? String(idVal) : Math.random().toString(36).slice(2),
+    username: String(getVal(r, ['Username','username','用户名','账号','IG用户名','instagram_username'])).trim(),
+    fullname: String(getVal(r, ['Fullname','fullname','Full Name','full_name','全名','姓名','名称','名字'])).trim(),
+    posts: parseInt(String(getVal(r, ['Posts','posts','发帖数','帖子','发文'])).replace(/,/g,'')) || 0,
+    followers: parseInt(String(getVal(r, ['Followers','followers','粉丝','粉丝数','粉'])).replace(/,/g,'')) || 0,
+    email: String(getVal(r, ['Email','email','E-mail','电子邮箱','邮箱','邮件'])).trim(),
+    phoneCode: String(getVal(r, ['Phone Country Code','phone_country_code','区号','国家区号','电话区号'])).trim(),
+    phone: String(getVal(r, ['Phone','phone','电话','手机','电话号码','手机号','联系电话'])).trim(),
+    city: String(getVal(r, ['City','city','城市','所在地','地点'])).trim(),
+    verified: /^(YES|TRUE|是|1|T)$/i.test(String(getVal(r, ['Is verified','is_verified','verified','是否认证','认证','蓝V'])).trim()),
+    isBiz: /^(YES|TRUE|是|1|T)$/i.test(String(getVal(r, ['Is Business','is_business','business','企业','是否企业号','商业号','企业号'])).trim()),
+    website: String(getVal(r, ['External URL','external_url','website','url','外链','官网','网站','个人网站'])).trim(),
+    profileUrl: String(getVal(r, ['Profile URL','profile_url','IG链接','主页链接','主页','Instagram','instagram'])).trim(),
+    avatarUrl: String(getVal(r, ['Avatar URL','avatar_url','头像','头像链接','头像URL'])).trim(),
+    bio: String(getVal(r, ['Biography','biography','bio','简介','个人简介','签名','描述'])).trim(),
+    category: String(getVal(r, ['Category','category','role','类型','赛道','分类','品类','行业'])).trim(),
+    whatsapp: String(getVal(r, ['whatsapp_number','whatsapp','WhatsApp','WhatsApp号码','WA','wa'])).trim(),
+    src,
+    status: String(getVal(r, ['status','状态','开发状态','跟进状态']) || '未联系').trim()
+  };
+  c.role = c.category || getVal(r, ['类型','分类']) || '未分类';
+  c.country = getVal(r, ['Country','country','国家','所在国家']) || detectCountry(c.phoneCode, c.phone || c.whatsapp);
+  c.region = getVal(r, ['Region','region','区域','地区','大区']) || getRegion(c.country);
+  c.score = score(c);
+  return c;
+}
+
+async function load(files){
+  for(const f of files){
+    try{
+      const buf=await f.arrayBuffer();
+      let wb;
+      try{
+        wb=XLSX.read(buf,{type:'array'});
+      }catch(err){
+        const txt=await f.text();
+        wb=XLSX.read(txt,{type:'string'});
+      }
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      const ids=new Set(D.map(c=>c.id));
+      let n=0;
+      rows.forEach(r=>{
+        const c=norm(r,f.name);
+        if(!ids.has(c.id)){
+          D.push(c);
+          ids.add(c.id);
+          n++;
+          if(c.country)selCountries.add(c.country);
+        }
+      });
+      FM[f.name]=(FM[f.name]||0)+n;
+    }catch(e){
+      console.error('Load file error:', e);
+      alert('文件解析失败 ['+f.name+']: 请检查表格格式\n错误信息: '+(e.message||e));
+    }
+  }
+  geoInited=true;
+  saveLS();
+  render();
+}
 
 function render(){
   const has=D.length>0;
