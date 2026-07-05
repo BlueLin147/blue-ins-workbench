@@ -1,0 +1,10 @@
+# Render Blueprint —— Blue's INS Workbench 静态站点一键部署
+# 用法: Render 控制台 → New → Blueprint → 选择当前仓库 → Apply
+# 上线后网址: https://blue-ins-workbench.onrender.com (名称在 Render 部署时可修改)
+services:
+  - name: blue-ins-workbench
+    type: web
+    runtime: static
+    buildCommand: "echo no build needed"
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false

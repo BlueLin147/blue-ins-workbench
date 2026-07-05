@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>Blue's Workbench</title>
+<script src="./xlsx.full.min.js"></script>
+<script>if (typeof XLSX === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\\/script>');</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#FAF6F1;--surface:#FFFFFF;--surface2:#F5EDE4;
+  --border:#E8DDD0;--border2:#D9CBBA;
+  --text:#1A1410;--text2:#7A6E62;--text3:#A89A8C;
+  --claude:#D4A27F;--claude-dark:#B8845E;--claude-light:#F0DFD0;
+  --accent:#25D366;--accent-dark:#1DA855;
+  --blue:#5B7FD4;--red:#D45B5B;--purple:#9B7FD4;--orange:#D4955B;
+  --radius:12px;
+  --shadow:0 1px 3px rgba(26,20,16,.06),0 4px 12px rgba(26,20,16,.04);
+  --shadow-lg:0 4px 16px rgba(26,20,16,.08),0 12px 40px rgba(26,20,16,.06);
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 36px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header-left{display:flex;align-items:center;gap:14px;}
+.header-logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,var(--claude),var(--claude-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:600;}
+.header h1{font-family:'Instrument Serif',serif;font-size:22px;font-weight:400;letter-spacing:-.3px;}
+.header h1 span{font-style:italic;color:var(--claude-dark);}
+.header-actions{display:flex;gap:8px;}
+.btn{padding:8px 18px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--text);}
+.btn:hover{border-color:var(--border2);box-shadow:var(--shadow);}
+.btn-primary{background:var(--claude);color:#fff;border-color:var(--claude);}
+.btn-primary:hover{background:var(--claude-dark);border-color:var(--claude-dark);}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-accent:hover{background:var(--accent-dark);}
+.btn-danger{background:transparent;color:var(--red);border-color:var(--red);}
+.export-wrap{position:relative;}
+.export-menu{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);overflow:hidden;z-index:150;min-width:170px;}
+.export-wrap.open .export-menu{display:block;}
+.export-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 16px;border:none;background:none;font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;text-align:left;}
+.export-menu button:hover{background:var(--surface2);}
+.export-menu button+button{border-top:1px solid var(--border);}
+.stats-bar{display:flex;gap:10px;padding:18px 36px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 22px;min-width:120px;flex-shrink:0;}
+.stat-card .num{font-family:'Instrument Serif',serif;font-size:28px;font-weight:400;line-height:1;}
+.stat-card .label{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.8px;font-weight:500;}
+.stat-card.c1 .num{color:var(--claude-dark);}
+.stat-card.c2 .num{color:var(--blue);}
+.stat-card.c3 .num{color:var(--orange);}
+.stat-card.c4 .num{color:var(--purple);}
+.stat-card.c5 .num{color:var(--accent-dark);}
+.toolbar{padding:14px 36px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface);}
+.search-wrap{position:relative;flex:1;min-width:200px;}
+.search-wrap::before{content:'⌕';position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);}
+.search-box{width:100%;padding:9px 14px 9px 36px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;outline:none;}
+.search-box:focus{border-color:var(--claude);}
+select.filter-select{padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;outline:none;cursor:pointer;}
+.drop-zone{margin:28px 36px;border:2px dashed var(--border2);border-radius:20px;padding:72px 20px;text-align:center;transition:all .3s;cursor:pointer;background:var(--surface);}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--claude);background:var(--claude-light);}
+.drop-zone h2{font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;margin-bottom:6px;}
+.drop-zone p{color:var(--text2);font-size:13px;}
+.drop-zone.hidden{display:none;}
+.file-tags{padding:6px 36px;display:flex;gap:8px;flex-wrap:wrap;}
+.file-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);}
+.file-tag .count{background:var(--claude);color:#fff;padding:1px 8px;border-radius:10px;font-weight:600;font-size:11px;}
+.file-tag .remove{cursor:pointer;opacity:.4;font-size:14px;}
+.file-tag .remove:hover{opacity:1;}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;padding:20px 36px 48px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .25s;position:relative;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow);}
+.card:hover{border-color:var(--claude);box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+.card-top{display:flex;gap:14px;align-items:flex-start;}
+.avatar-wrap{width:52px;height:52px;border-radius:50%;flex-shrink:0;position:relative;overflow:hidden;}
+.avatar-fallback{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:21px;font-family:'Instrument Serif',serif;color:#fff;font-weight:400;z-index:1;}
+.avatar-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:2;}
+.card-info{flex:1;min-width:0;}
+.card-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-username{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.card-score{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.score-high{background:rgba(37,211,102,.1);color:var(--accent-dark);border:2px solid var(--accent);}
+.score-mid{background:rgba(212,149,91,.1);color:var(--orange);border:2px solid var(--orange);}
+.score-low{background:var(--surface2);color:var(--text3);border:2px solid var(--border);}
+.card-badges{display:flex;gap:5px;flex-wrap:wrap;}
+.badge{font-size:11px;padding:3px 10px;border-radius:6px;font-weight:500;}
+.badge-category{background:rgba(155,127,212,.1);color:var(--purple);}
+.badge-city{background:rgba(212,162,127,.12);color:var(--claude-dark);}
+.badge-country{background:rgba(91,127,212,.1);color:var(--blue);}
+.badge-verified{background:rgba(37,211,102,.1);color:var(--accent-dark);}
+.badge-biz{background:rgba(212,149,91,.1);color:var(--orange);}
+.card-bio{font-size:12px;color:var(--text2);line-height:1.6;max-height:57px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
+.card-contact{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;}
+.contact-btn{padding:7px 14px;border-radius:20px;border:none;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.wa-btn{background:#25D366;color:#fff;}.wa-btn:hover{background:#1DA855;}
+.msg-btn{background:#128C7E;color:#fff;}.msg-btn:hover{background:#075E54;}
+
+/* WhatsApp number display row */
+.wa-number-row{display:flex;align-items:center;gap:8px;padding:7px 11px;background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.22);border-radius:8px;transition:all .15s;}
+.wa-number-row:hover{background:rgba(37,211,102,.1);border-color:rgba(37,211,102,.35);}
+.wa-num-icon{color:var(--accent-dark);display:flex;align-items:center;flex-shrink:0;}
+.wa-num-text{flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--accent-dark);font-weight:500;letter-spacing:.3px;cursor:pointer;user-select:all;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wa-num-text:hover{text-decoration:underline;}
+.wa-copy-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;display:flex;align-items:center;border-radius:5px;transition:all .15s;flex-shrink:0;}
+.wa-copy-btn:hover{color:var(--accent-dark);background:rgba(37,211,102,.15);}
+.wa-number-row.copied{background:rgba(37,211,102,.18);border-color:var(--accent);}
+.wa-number-row.copied .wa-copy-btn{color:var(--accent-dark);}
+/* Compact version inside list view cells */
+.list-table .wa-num-inline{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-dark);font-weight:500;cursor:pointer;letter-spacing:.2px;transition:all .15s;max-width:180px;}
+.list-table .wa-num-inline:hover{background:rgba(37,211,102,.15);border-color:var(--accent);}
+.list-table .wa-num-inline .num{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:all;}
+.list-table .wa-num-inline.copied{background:rgba(37,211,102,.2);border-color:var(--accent);}
+
+.email-btn{background:#4285F4;color:#fff;}.email-btn:hover{background:#3367D6;}
+.ig-btn{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;}
+.web-btn{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+
+/* Instagram-style stats footer */
+.card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);}
+.ig-stats{display:flex;gap:0;flex:1;}
+.ig-stat{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:60px;gap:1px;}
+.ig-stat .ig-num{font-size:15px;font-weight:700;color:var(--text);line-height:1.2;}
+.ig-stat .ig-label{font-size:10px;color:var(--text3);font-weight:400;}
+.status-select{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:11px;cursor:pointer;outline:none;}
+
+/* Search highlight */
+mark.hl{background:rgba(212,162,127,.4);color:inherit;border-radius:2px;padding:0 1px;}
+
+/* View toggle */
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-left:4px;}
+.view-toggle button{padding:6px 10px;border:none;background:var(--surface);color:var(--text3);cursor:pointer;font-size:14px;line-height:1;transition:all .15s;}
+.view-toggle button:not(:last-child){border-right:1px solid var(--border);}
+.view-toggle button.active{background:var(--claude);color:#fff;}
+.view-toggle button:hover:not(.active){background:var(--surface2);}
+
+/* List view */
+.list-wrap{padding:0 36px 48px;display:none;}
+.list-wrap.active{display:block;}
+.cards.active{display:grid;}
+.cards{display:none;}
+.list-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.list-table thead{position:sticky;top:0;z-index:2;}
+.list-table th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;}
+.list-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.list-table tbody tr{transition:background .15s;}
+.list-table tbody tr:hover{background:var(--surface2);}
+.list-table tbody tr:last-child td{border-bottom:none;}
+.list-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;position:relative;overflow:hidden;display:inline-flex;}
+.list-avatar .avatar-fallback{width:32px;height:32px;font-size:13px;}
+.list-avatar img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:2;}
+.list-name-cell{display:flex;align-items:center;gap:10px;min-width:180px;}
+.list-name-text{min-width:0;}
+.list-name-text .card-name{font-size:13px;}
+.list-name-text .card-username{font-size:11px;}
+.list-score{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.list-badges{display:flex;gap:4px;flex-wrap:wrap;max-width:200px;}
+.list-actions{display:flex;gap:4px;flex-wrap:nowrap;}
+.list-actions .contact-btn{padding:4px 8px;font-size:11px;border-radius:14px;}
+.list-actions .contact-btn.disabled{opacity:.2;pointer-events:none;filter:grayscale(1);}
+td.col-country{white-space:nowrap;font-size:12px;color:var(--blue);font-weight:500;}
+td.col-followers{font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;}
+td.col-status .status-select{font-size:11px;}
+td.col-category .badge{font-size:10px;padding:2px 7px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}
+.filter-count{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.filter-count.filtered{color:var(--claude-dark);font-weight:600;}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,20,16,.4);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:540px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal h3{margin-bottom:16px;font-family:'Instrument Serif',serif;font-size:18px;font-weight:400;}
+.modal textarea{width:100%;min-height:160px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;padding:14px;resize:vertical;outline:none;line-height:1.7;}
+.modal textarea:focus{border-color:var(--claude);}
+.modal-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;}
+.copy-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--claude-dark);color:#fff;padding:10px 28px;border-radius:12px;font-weight:500;font-size:14px;transition:transform .3s;z-index:300;box-shadow:var(--shadow-lg);}
+.copy-toast.show{transform:translateX(-50%) translateY(0);}
+.empty-state{text-align:center;padding:80px 20px;color:var(--text2);}
+.empty-state h3{font-family:'Instrument Serif',serif;font-size:18px;margin-bottom:8px;color:var(--text);font-weight:400;}
+/* Geo panel */
+.geo-panel{padding:16px 36px;background:var(--surface);border-bottom:1px solid var(--border);}
+.geo-panel.hidden{display:none;}
+.geo-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.btn-sm{padding:5px 12px;font-size:11px;font-weight:600;font-family:inherit;border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--surface2);color:var(--text);}
+.btn-sm:hover{border-color:var(--claude);color:var(--claude-dark);}
+.geo-info{font-size:11px;color:var(--text2);margin-left:auto;font-family:'JetBrains Mono',monospace;}
+.region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+.region-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:all .15s;position:relative;}
+.region-card.all-selected{border-color:var(--blue);background:rgba(91,127,212,.04);}
+.region-card.partial-selected{border-color:var(--orange);background:rgba(212,149,91,.04);}
+.region-header{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.region-check{width:18px;height:18px;border:2px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;transition:all .15s;flex-shrink:0;}
+.region-card.all-selected .region-check{background:var(--blue);border-color:var(--blue);}
+.region-card.partial-selected .region-check{background:var(--orange);border-color:var(--orange);}
+.region-name{font-weight:600;font-size:14px;flex:1;}
+.region-count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-dark);font-weight:600;}
+.country-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.country-chip{padding:3px 10px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--surface);color:var(--text2);user-select:none;display:flex;align-items:center;gap:4px;}
+.country-chip:hover{border-color:var(--blue);}
+.country-chip.selected{background:rgba(91,127,212,.1);color:var(--blue);border-color:var(--blue);font-weight:600;}
+.country-chip .chip-count{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.7;}
+.geo-active-tag{background:rgba(91,127,212,.1);color:var(--blue);border-color:var(--blue);font-weight:600;animation:fadeIn .2s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+/* VCF export panel */
+.vcf-panel{padding:16px 36px;background:var(--surface);border-bottom:1px solid var(--border);}
+.vcf-panel.hidden{display:none;}
+.vcf-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.vcf-info{font-size:11px;color:var(--text2);margin-left:auto;font-family:'JetBrains Mono',monospace;}
+.vcf-hint{font-size:11px;color:var(--text3);margin-bottom:10px;}
+.vcf-hint code{background:var(--surface2);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;color:var(--claude-dark);font-size:10.5px;}
+.vcf-region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+.vcf-region-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s;position:relative;user-select:none;}
+.vcf-region-card:hover{border-color:var(--claude);}
+.vcf-region-card.selected{border-color:var(--claude);background:var(--claude-light);box-shadow:0 0 0 1px var(--claude);}
+.vcf-region-check{position:absolute;top:10px;right:10px;width:16px;height:16px;border:2px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;transition:all .15s;}
+.vcf-region-card.selected .vcf-region-check{background:var(--claude);border-color:var(--claude);}
+.vcf-region-name{font-weight:600;font-size:13px;margin-bottom:2px;padding-right:22px;}
+.vcf-region-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-dark);font-weight:600;}
+.vcf-region-countries{font-size:10.5px;color:var(--text2);margin-top:4px;line-height:1.35;max-height:42px;overflow:hidden;}
+.vcf-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.vcf-btn{padding:10px 18px;border-radius:8px;border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.vcf-btn-main{background:var(--accent);color:#fff;}
+.vcf-btn-main:hover:not(:disabled){background:var(--accent-dark);}
+.vcf-btn-main:disabled{background:var(--border);color:var(--text3);cursor:not-allowed;}
+.vcf-btn-alt{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.vcf-btn-alt:hover:not(:disabled){border-color:var(--claude);color:var(--claude-dark);}
+.vcf-btn-alt:disabled{opacity:.4;cursor:not-allowed;}
+.vcf-format-preview{background:var(--surface2);border-radius:6px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--claude-dark);margin-top:10px;border-left:3px solid var(--claude);}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:20px 36px;flex-wrap:wrap;}
+.pagination button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12px;cursor:pointer;transition:all .15s;}
+.pagination button:hover:not(:disabled){border-color:var(--claude);color:var(--claude-dark);}
+.pagination button.active{background:var(--claude);color:#fff;border-color:var(--claude);}
+.pagination button:disabled{opacity:.3;cursor:not-allowed;}
+.pagination .page-info{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;}
+
+@media(max-width:768px){.header,.stats-bar,.toolbar,.cards,.file-tags,.geo-panel,.vcf-panel,.list-wrap{padding-left:16px;padding-right:16px;}.drop-zone{margin:16px;}.cards{grid-template-columns:1fr;}.region-grid,.vcf-region-grid{grid-template-columns:1fr;}.list-table{font-size:12px;}.list-table th,.list-table td{padding:8px 8px;}}
+
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left"><div class="header-logo">B</div><h1>Blue's <span>Workbench</span></h1></div>
+  <div class="header-actions">
+    <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv" multiple hidden id="fileInput"></label>
+    <div class="export-wrap" id="exportWrap">
+      <button class="btn" onclick="toggleExport(event)">📥 导出</button>
+      <div class="export-menu">
+        <button onclick="exportHTML()">🌐 导出 HTML 报告</button>
+        <button onclick="exportXLSX()">📊 导出全部 Excel</button>
+        <button onclick="exportFilteredXLSX()">📋 导出筛选结果 Excel</button>
+      </div>
+    </div>
+    <button class="btn btn-danger" onclick="clearAll()">清空</button>
+  </div>
+</div>
+<div class="stats-bar">
+  <div class="stat-card c1"><div class="num" id="sT">0</div><div class="label">总客户</div></div>
+  <div class="stat-card c2"><div class="num" id="sC">0</div><div class="label">可联系</div></div>
+  <div class="stat-card c3"><div class="num" id="sB">0</div><div class="label">企业号</div></div>
+  <div class="stat-card c4"><div class="num" id="sD">0</div><div class="label">已联系</div></div>
+  <div class="stat-card c5"><div class="num" id="sI">0</div><div class="label">有意向</div></div>
+</div>
+<div class="toolbar" id="toolbar" style="display:none">
+  <div class="search-wrap"><input type="text" class="search-box" id="searchBox" placeholder="搜索公司、用户名、简介、城市..."></div>
+  <select class="filter-select" id="fStatus"><option value="">全部状态</option><option>未联系</option><option>已发消息</option><option>已回复</option><option>有意向</option><option>已报价</option><option>成交</option><option>无效</option></select>
+  <select class="filter-select" id="fRole"><option value="">全部类型</option></select>
+  <select class="filter-select" id="fContact"><option value="">联系方式</option><option value="wa">有WhatsApp</option><option value="em">有邮箱</option><option value="ph">有电话</option><option value="web">有网站</option></select>
+  <select class="filter-select" id="fSort"><option value="score">按评分</option><option value="followers">按粉丝</option><option value="posts">按帖子</option><option value="name">按名称</option></select>
+  <span class="filter-count" id="filterCount"></span>
+  <button class="btn" id="btnToggleGeo" onclick="toggleGeoPanel()" style="margin-left:auto">🌍 国家筛选</button>
+  <button class="btn" id="btnToggleVcf" onclick="toggleVcfPanel()">📇 VCF 导出</button>
+  <div class="view-toggle"><button class="active" id="vCard" onclick="setView('card')" title="卡片视图">📇</button><button id="vList" onclick="setView('list')" title="列表视图">☰</button></div>
+</div>
+<div class="file-tags" id="fileTags"></div>
+<div class="geo-panel hidden" id="geoPanel">
+  <div class="geo-toolbar">
+    <button class="btn-sm" onclick="geoAll()">全选</button>
+    <button class="btn-sm" onclick="geoNone()">取消全选</button>
+    <button class="btn-sm" onclick="geoInvert()">反选</button>
+    <span class="geo-info" id="geoInfo"></span>
+  </div>
+  <div class="region-grid" id="regionGrid"></div>
+</div>
+<div class="vcf-panel hidden" id="vcfPanel">
+  <div class="vcf-toolbar">
+    <button class="btn-sm" onclick="vcfAll()">全选</button>
+    <button class="btn-sm" onclick="vcfNone()">取消全选</button>
+    <button class="btn-sm" onclick="vcfInvert()">反选</button>
+    <span class="vcf-info" id="vcfInfo"></span>
+  </div>
+  <div class="vcf-hint">生成 vCard（<code>.vcf</code>）通讯录文件，联系人名格式为 <code>日期 + 国家 + 名字</code>（日期为导出当天，格式年月日，如 <code>260703</code>）。可单独勾选国家导出。仅包含有 WhatsApp/电话号码的客户。</div>
+  <div class="vcf-format-preview" id="vcfFormatPreview">—</div>
+  <div class="vcf-region-grid" id="vcfRegionGrid"></div>
+  <div class="vcf-actions">
+    <button class="vcf-btn vcf-btn-main" id="btnVcfSelected" onclick="downloadVcfSelected()" disabled>下载选中国家</button>
+    <button class="vcf-btn vcf-btn-alt" id="btnVcfAll" onclick="downloadVcfAll()" disabled>全部下载为一个 VCF</button>
+  </div>
+</div>
+<div class="drop-zone" id="dropZone"><div style="font-size:40px;margin-bottom:12px">📁</div><h2>拖拽文件到这里，或点击上方导入</h2><p>支持 .xlsx / .xls / .csv，可多次导入自动合并去重</p></div>
+<div class="cards active" id="grid"></div>
+<div class="list-wrap" id="listWrap">
+  <table class="list-table">
+    <thead><tr><th>名称</th><th>国家</th><th>类型</th><th>评分</th><th>粉丝</th><th>帖子</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody id="listBody"></tbody>
+  </table>
+</div>
+<div class="empty-state" id="empty" style="display:none"><h3>没有匹配的客户</h3><p>试试调整筛选条件</p></div>
+<div class="pagination" id="pagination" style="display:none"></div>
+<div class="copy-toast" id="toast">✅ 已复制</div>
+
+<script>
+let D=[];let FM={};let selCountries=new Set();let geoInited=false;let viewMode='card';
+let curPage=0;const PAGE_SIZE=50;let lastFiltered=[];let selNoCountry=true;
+const LS_KEY='bw_data',LS_FM='bw_fm';
+function saveLS(){try{localStorage.setItem(LS_KEY,JSON.stringify(D));localStorage.setItem(LS_FM,JSON.stringify(FM));}catch(e){}}
+function loadLS(){try{const d=localStorage.getItem(LS_KEY),f=localStorage.getItem(LS_FM);if(d&&JSON.parse(d).length){D=JSON.parse(d);FM=f?JSON.parse(f):{};selCountries=new Set(D.map(c=>c.country).filter(Boolean));geoInited=true;render();}}catch(e){}}
+
+const IC={
+wa:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>',
+email:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+ig:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>',
+web:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+copy:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+waSmall:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'
+};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,' ');
+const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+const CC={'1':'美国','7':'俄罗斯','20':'埃及','27':'南非','30':'希腊','31':'荷兰','32':'比利时','33':'法国','34':'西班牙','36':'匈牙利','39':'意大利','40':'罗马尼亚','41':'瑞士','43':'奥地利','44':'英国','45':'丹麦','46':'瑞典','47':'挪威','48':'波兰','49':'德国','51':'秘鲁','52':'墨西哥','53':'古巴','54':'阿根廷','55':'巴西','56':'智利','57':'哥伦比亚','58':'委内瑞拉','60':'马来西亚','61':'澳大利亚','62':'印尼','63':'菲律宾','64':'新西兰','65':'新加坡','66':'泰国','81':'日本','82':'韩国','84':'越南','86':'中国','90':'土耳其','91':'印度','92':'巴基斯坦','93':'阿富汗','94':'斯里兰卡','95':'缅甸','98':'伊朗','212':'摩洛哥','213':'阿尔及利亚','216':'突尼斯','218':'利比亚','220':'冈比亚','221':'塞内加尔','222':'毛里塔尼亚','223':'马里','224':'几内亚','225':'科特迪瓦','226':'布基纳法索','227':'尼日尔','228':'多哥','229':'贝宁','230':'毛里求斯','231':'利比里亚','232':'塞拉利昂','233':'加纳','234':'尼日利亚','235':'乍得','236':'中非','237':'喀麦隆','244':'安哥拉','248':'塞舌尔','249':'苏丹','250':'卢旺达','251':'埃塞俄比亚','252':'索马里','253':'吉布提','254':'肯尼亚','255':'坦桑尼亚','256':'乌干达','257':'布隆迪','258':'莫桑比克','260':'赞比亚','261':'马达加斯加','263':'津巴布韦','264':'纳米比亚','265':'马拉维','266':'莱索托','267':'博茨瓦纳','268':'斯威士兰','291':'厄立特里亚','351':'葡萄牙','352':'卢森堡','353':'爱尔兰','354':'冰岛','355':'阿尔巴尼亚','356':'马耳他','357':'塞浦路斯','358':'芬兰','359':'保加利亚','370':'立陶宛','371':'拉脱维亚','372':'爱沙尼亚','373':'摩尔多瓦','374':'亚美尼亚','375':'白俄罗斯','380':'乌克兰','381':'塞尔维亚','382':'黑山','383':'科索沃','385':'克罗地亚','386':'斯洛文尼亚','387':'波黑','389':'北马其顿','420':'捷克','421':'斯洛伐克','502':'危地马拉','503':'萨尔瓦多','504':'洪都拉斯','505':'尼加拉瓜','506':'哥斯达黎加','507':'巴拿马','509':'海地','591':'玻利维亚','593':'厄瓜多尔','595':'巴拉圭','598':'乌拉圭','673':'文莱','675':'巴布亚新几内亚','679':'斐济','852':'香港','853':'澳门','855':'柬埔寨','856':'老挝','880':'孟加拉','886':'台湾','960':'马尔代夫','961':'黎巴嫩','962':'约旦','963':'叙利亚','964':'伊拉克','965':'科威特','966':'沙特','967':'也门','968':'阿曼','970':'巴勒斯坦','971':'阿联酋','972':'以色列','973':'巴林','974':'卡塔尔','976':'蒙古','977':'尼泊尔','992':'塔吉克斯坦','993':'土库曼斯坦','994':'阿塞拜疆','995':'格鲁吉亚','996':'吉尔吉斯斯坦','998':'乌兹别克斯坦'};
+const RM={'中东':['土耳其','沙特','阿联酋','科威特','卡塔尔','巴林','阿曼','也门','伊拉克','约旦','黎巴嫩','叙利亚','巴勒斯坦','以色列','伊朗'],'东南亚':['泰国','越南','印尼','菲律宾','马来西亚','新加坡','缅甸','柬埔寨','老挝','文莱'],'南亚':['印度','巴基斯坦','孟加拉','斯里兰卡','尼泊尔','马尔代夫','阿富汗'],'欧洲':['英国','法国','德国','意大利','西班牙','葡萄牙','荷兰','比利时','瑞士','奥地利','瑞典','挪威','丹麦','芬兰','波兰','捷克','斯洛伐克','匈牙利','罗马尼亚','保加利亚','希腊','塞浦路斯','爱尔兰','冰岛','卢森堡','马耳他','克罗地亚','斯洛文尼亚','爱沙尼亚','拉脱维亚','立陶宛','塞尔维亚','黑山','科索沃','波黑','北马其顿','阿尔巴尼亚','摩尔多瓦','乌克兰','白俄罗斯'],'北美':['美国'],'拉美':['墨西哥','巴西','阿根廷','智利','哥伦比亚','秘鲁','委内瑞拉','厄瓜多尔','玻利维亚','巴拉圭','乌拉圭','古巴','危地马拉','洪都拉斯','萨尔瓦多','尼加拉瓜','哥斯达黎加','巴拿马','海地'],'非洲':['埃及','南非','尼日利亚','加纳','肯尼亚','坦桑尼亚','埃塞俄比亚','摩洛哥','阿尔及利亚','突尼斯','利比亚','塞内加尔','喀麦隆','科特迪瓦','乌干达','莫桑比克','马达加斯加','安哥拉','赞比亚','津巴布韦','卢旺达','苏丹','索马里','冈比亚','毛里塔尼亚','马里','几内亚','布基纳法索','尼日尔','多哥','贝宁','毛里求斯','利比里亚','塞拉利昂','乍得','中非','纳米比亚','马拉维','莱索托','博茨瓦纳','斯威士兰','厄立特里亚','塞舌尔','吉布提','布隆迪'],'东亚':['日本','韩国','中国','香港','澳门','台湾','蒙古'],'俄罗斯及中亚':['俄罗斯','乌兹别克斯坦','塔吉克斯坦','土库曼斯坦','吉尔吉斯斯坦','亚美尼亚','阿塞拜疆','格鲁吉亚'],'大洋洲':['澳大利亚','新西兰','斐济','巴布亚新几内亚']};
+function detectCountry(phoneCode,phone){if(phoneCode){const c=String(phoneCode).replace(/\D/g,'');if(c&&CC[c])return CC[c];for(let l=3;l>=1;l--){const x=c.slice(0,l);if(CC[x])return CC[x]}}if(phone){let p=String(phone).replace(/[\s\-\(\)]/g,'');if(p[0]==='+')p=p.slice(1);else if(p.startsWith('00'))p=p.slice(2);for(let l=3;l>=1;l--){const x=p.slice(0,l);if(CC[x])return CC[x]}}return'';}
+function getRegion(c){if(!c)return'';for(const[r,cs]of Object.entries(RM))if(cs.includes(c))return r;return'其他';}
+const COLORS=[['#D4A27F','#B8845E'],['#5B7FD4','#4565B0'],['#9B7FD4','#7D5FC0'],['#D4955B','#B87A42'],['#5BADD4','#4290B8'],['#D45B8A','#B84270'],['#7FD4A2','#5EB884'],['#D4C45B','#B8A842'],['#5BD4C4','#42B8A8'],['#D47F5B','#B86242'],['#8A5BD4','#7042B8'],['#5BD470','#42B856']];
+function acol(name){let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);return COLORS[Math.abs(h)%COLORS.length];}
+
+function highlight(text,q){
+  if(!q)return esc(text);
+  const safe=esc(text);
+  const qe=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return safe.replace(new RegExp('('+qe+')','gi'),'<mark class="hl">$1</mark>');
+}
+
+
+function score(c){let s=0;if(c.email)s+=20;if(c.phone||c.whatsapp)s+=25;if(c.isBiz)s+=15;if(c.website)s+=5;if(c.followers>1e4)s+=15;else if(c.followers>1e3)s+=10;else if(c.followers>100)s+=5;if(c.posts>50)s+=5;if(c.city)s+=5;if(c.bio&&c.bio.length>20)s+=5;if(c.verified)s+=5;return Math.min(s,100);}
+function waNum(c){
+  if(c.whatsapp){
+    let w=String(c.whatsapp).replace(/\D/g,'');
+    if(w.startsWith('00'))w=w.slice(2);
+    return w||null;
+  }
+  if(c.phone){
+    const cc=String(c.phoneCode||'').replace(/\D/g,'');
+    let p=String(c.phone).replace(/\D/g,'');
+    if(!p)return null;
+    if(p.startsWith('00'))p=p.slice(2);
+    // Phone already includes country code → don't duplicate
+    if(cc&&p.startsWith(cc)&&p.length>=10)return p;
+    if(cc)return cc+p;
+    if(p.length>=7)return p;
+  }
+  return null;
+}
+function formatWaNum(raw){
+  if(!raw)return'';
+  let n=String(raw).replace(/[^\d]/g,'');
+  if(!n)return'';
+  let cc='';
+  for(let l=3;l>=1;l--){if(CC[n.slice(0,l)]){cc=n.slice(0,l);break;}}
+  const rest=cc?n.slice(cc.length):n;
+  const len=rest.length;
+  let formatted;
+  if(len<=4)formatted=rest;
+  else if(len<=7)formatted=rest.slice(0,len-4)+' '+rest.slice(len-4);
+  else if(len<=10)formatted=rest.slice(0,len-7)+' '+rest.slice(len-7,len-4)+' '+rest.slice(len-4);
+  else formatted=rest.slice(0,3)+' '+rest.slice(3,len-4)+' '+rest.slice(len-4);
+  return cc?'+'+cc+(formatted?' '+formatted:''):'+'+formatted;
+}
+function copyWaNum(ev,text,rowEl){
+  ev&&ev.stopPropagation();
+  navigator.clipboard.writeText(text).then(()=>{
+    const t=document.getElementById('toast');t.textContent='✅ 已复制 '+text;t.classList.add('show');
+    setTimeout(()=>{t.classList.remove('show');t.textContent='✅ 已复制';},1400);
+    if(rowEl){rowEl.classList.add('copied');setTimeout(()=>rowEl.classList.remove('copied'),1000);}
+  }).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();});
+}
+
+function norm(r,src){const c={id:r['User ID']||r['user_id']||Math.random().toString(36).slice(2),username:r['Username']||r['username']||'',fullname:r['Fullname']||r['fullname']||r['Full Name']||'',posts:parseInt(r['Posts']||r['posts'])||0,followers:parseInt(r['Followers']||r['followers'])||0,email:r['Email']||r['email']||'',phoneCode:r['Phone Country Code']||r['phone_country_code']||'',phone:r['Phone']||r['phone']||'',city:r['City']||r['city']||'',verified:(r['Is verified']||'').toString().toUpperCase()==='YES',isBiz:(r['Is Business']||'').toString().toUpperCase()==='YES',website:r['External URL']||r['external_url']||'',profileUrl:r['Profile URL']||r['profile_url']||'',avatarUrl:r['Avatar URL']||r['avatar_url']||'',bio:r['Biography']||r['biography']||'',category:r['Category']||r['category']||'',whatsapp:r['whatsapp_number']||r['whatsapp']||'',src,status:'未联系'};c.role=c.category||'未分类';c.country=detectCountry(c.phoneCode,c.phone||c.whatsapp);c.region=getRegion(c.country);c.score=score(c);return c;}
+
+async function load(files){for(const f of files){try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});const ids=new Set(D.map(c=>c.id));let n=0;rows.forEach(r=>{const c=norm(r,f.name);if(!ids.has(c.id)){D.push(c);ids.add(c.id);n++;if(c.country)selCountries.add(c.country);}});FM[f.name]=(FM[f.name]||0)+n;}catch(e){alert('解析失败: '+f.name);}}geoInited=true;saveLS();render();}
+
+function render(){
+  const has=D.length>0;
+  document.getElementById('dropZone').classList.toggle('hidden',has);
+  document.getElementById('toolbar').style.display=has?'flex':'none';
+  document.getElementById('fileTags').innerHTML=Object.entries(FM).map(([n,c])=>`<span class="file-tag">📄 ${n} <span class="count">${c}</span> <span class="remove" onclick="rmFile('${n.replace(/'/g,"\\'")}')">✕</span></span>`).join('');
+  document.getElementById('sT').textContent=D.length;
+  document.getElementById('sC').textContent=D.filter(c=>c.email||c.phone||c.whatsapp).length;
+  document.getElementById('sB').textContent=D.filter(c=>c.isBiz).length;
+  document.getElementById('sD').textContent=D.filter(c=>c.status!=='未联系').length;
+  document.getElementById('sI').textContent=D.filter(c=>['有意向','已报价','成交'].includes(c.status)).length;
+  // Rebuild category filter dynamically
+  const fR=document.getElementById('fRole'),curV=fR.value;
+  const cats=[...new Set(D.map(c=>c.role))].sort();
+  fR.innerHTML='<option value="">全部类型</option>'+cats.map(c=>`<option${c===curV?' selected':''}>${c}</option>`).join('');
+  renderGeoPanel();
+  renderVcfPanel();
+  cards();
+}
+
+function cards(resetPage){
+  if(resetPage!==false)curPage=0;
+  const q=document.getElementById('searchBox').value.toLowerCase();
+  const fs=document.getElementById('fStatus').value;
+  const fr=document.getElementById('fRole').value;
+  const fc=document.getElementById('fContact').value;
+  const so=document.getElementById('fSort').value;
+  // Country filter
+  const allCountriesInData=new Set(D.map(c=>c.country).filter(Boolean));
+  const hasNoCountry=D.some(c=>!c.country);
+  const geoActive=(selCountries.size<allCountriesInData.size)||(hasNoCountry&&!selNoCountry);
+  let f=D.filter(c=>{
+    if(q&&![c.fullname,c.username,c.bio,c.city,c.email,c.category,c.country||'',c.region||''].join(' ').toLowerCase().includes(q))return false;
+    if(fs&&c.status!==fs)return false;if(fr&&c.role!==fr)return false;
+    if(geoActive){
+      if(!c.country&&!selNoCountry)return false;
+      if(c.country&&!selCountries.has(c.country))return false;
+    }
+    if(fc==='wa'&&!waNum(c))return false;if(fc==='em'&&!c.email)return false;
+    if(fc==='ph'&&!c.phone&&!c.whatsapp)return false;if(fc==='web'&&!c.website)return false;
+    return true;
+  });
+  f.sort((a,b)=>so==='score'?b.score-a.score:so==='followers'?b.followers-a.followers:so==='posts'?b.posts-a.posts:(a.fullname||a.username).localeCompare(b.fullname||b.username));
+  lastFiltered=f;
+
+  // Filter count
+  const fcEl=document.getElementById('filterCount');
+  if(f.length<D.length){fcEl.textContent=`显示 ${f.length} / ${D.length}`;fcEl.className='filter-count filtered';}
+  else{fcEl.textContent=`共 ${D.length} 条`;fcEl.className='filter-count';}
+
+  const g=document.getElementById('grid'),em=document.getElementById('empty'),lw=document.getElementById('listWrap'),lb=document.getElementById('listBody');
+  g.classList.toggle('active',viewMode==='card');
+  lw.classList.toggle('active',viewMode==='list');
+  if(!f.length&&D.length){g.innerHTML='';lb.innerHTML='';em.style.display='block';document.getElementById('pagination').style.display='none';return;}
+  em.style.display='none';
+
+  // Pagination
+  const totalPages=Math.ceil(f.length/PAGE_SIZE);
+  if(curPage>=totalPages)curPage=totalPages-1;
+  if(curPage<0)curPage=0;
+  const pgStart=curPage*PAGE_SIZE,pgEnd=Math.min(pgStart+PAGE_SIZE,f.length);
+  const pageItems=f.slice(pgStart,pgEnd);
+  const pgEl=document.getElementById('pagination');
+  if(totalPages>1){
+    pgEl.style.display='flex';
+    let ph='<button onclick="goPage(0)"'+(curPage===0?' disabled':'')+'>«</button>';
+    ph+='<button onclick="goPage('+(curPage-1)+')"'+(curPage===0?' disabled':'')+'>‹</button>';
+    const rng=2;let ps=Math.max(0,curPage-rng),pe=Math.min(totalPages-1,curPage+rng);
+    if(ps>0)ph+='<span class="page-info">…</span>';
+    for(let i=ps;i<=pe;i++)ph+='<button onclick="goPage('+i+')"'+(i===curPage?' class="active"':'')+'>'+(i+1)+'</button>';
+    if(pe<totalPages-1)ph+='<span class="page-info">…</span>';
+    ph+='<button onclick="goPage('+(curPage+1)+')"'+(curPage>=totalPages-1?' disabled':'')+'>›</button>';
+    ph+='<button onclick="goPage('+(totalPages-1)+')"'+(curPage>=totalPages-1?' disabled':'')+'>»</button>';
+    ph+=' <span class="page-info">'+(pgStart+1)+'–'+pgEnd+' / '+f.length+'</span>';
+    pgEl.innerHTML=ph;
+  }else{pgEl.style.display='none';}
+
+  // === Card View ===
+  g.innerHTML='';
+  if(viewMode==='card'){
+  pageItems.forEach(c=>{
+    const w=waNum(c),sc=c.score>=60?'score-high':c.score>=35?'score-mid':'score-low',gi=D.indexOf(c);
+    const ini=(c.fullname||c.username||'?')[0].toUpperCase();
+    const [cl1,cl2]=acol(c.username||c.fullname||'x');
+    const card=document.createElement('div');card.className='card';
+    const avatarWrap=document.createElement('div');avatarWrap.className='avatar-wrap';
+    const fb=document.createElement('div');fb.className='avatar-fallback';fb.style.background=`linear-gradient(145deg,${cl1},${cl2})`;fb.textContent=ini;avatarWrap.appendChild(fb);
+    if(c.avatarUrl){const img=document.createElement('img');img.loading='lazy';img.src='https://wsrv.nl/?url='+encodeURIComponent(c.avatarUrl)+'&w=150&h=150&fit=cover&default=1';img.onerror=function(){this.remove();};avatarWrap.appendChild(img);}
+    card.innerHTML=`<div class="card-top"><div id="_av${gi}"></div><div class="card-info"><div class="card-name">${highlight(c.fullname||c.username,q)}</div><div class="card-username">@${esc(c.username)}</div></div><div class="card-score ${sc}">${c.score}</div></div>
+<div class="card-badges"><span class="badge badge-category">${esc(c.role)}</span>${c.country?`<span class="badge badge-country">🌍${esc(c.country)}</span>`:''}${c.city?`<span class="badge badge-city">📍${highlight(c.city,q)}</span>`:''}${c.verified?'<span class="badge badge-verified">✓ 认证</span>':''}${c.isBiz?'<span class="badge badge-biz">企业</span>':''}</div>
+${c.bio?`<div class="card-bio">${highlight(c.bio,q)}</div>`:''}
+${w?`<div class="wa-number-row" onclick="copyWaNum(event,'+${w}',this)" title="点击号码或复制图标"><span class="wa-num-icon">${IC.waSmall}</span><span class="wa-num-text">${formatWaNum(w)}</span><button class="wa-copy-btn" onclick="copyWaNum(event,'+${w}',this.parentNode)" title="复制 +${w}">${IC.copy}</button></div>`:''}
+<div class="card-contact">${w?`<a class="contact-btn wa-btn" href="https://wa.me/${w}" target="_blank">${IC.wa} WhatsApp</a>`:''}${c.email?`<a class="contact-btn email-btn" href="mailto:${c.email}">${IC.email} Email</a>`:''}${c.profileUrl?`<a class="contact-btn ig-btn" href="${esc(c.profileUrl)}" target="_blank">${IC.ig} IG</a>`:''}${c.website?`<a class="contact-btn web-btn" href="${esc(c.website)}" target="_blank">${IC.web}</a>`:''}</div>
+<div class="card-footer"><div class="ig-stats"><div class="ig-stat"><span class="ig-num">${fmt(c.posts)}</span><span class="ig-label">posts</span></div><div class="ig-stat"><span class="ig-num">${fmt(c.followers)}</span><span class="ig-label">followers</span></div></div>
+<select class="status-select" onchange="D[${gi}].status=this.value;updStats();saveLS()">${['未联系','已发消息','已回复','有意向','已报价','成交','无效'].map(s=>`<option${c.status===s?' selected':''}>${s}</option>`).join('')}</select></div>`;
+    card.querySelector('#_av'+gi).replaceWith(avatarWrap);g.appendChild(card);
+  });
+  }
+
+  // === List View ===
+  lb.innerHTML='';
+  if(viewMode==='list'){
+  pageItems.forEach(c=>{
+    const w=waNum(c),sc=c.score>=60?'score-high':c.score>=35?'score-mid':'score-low',gi=D.indexOf(c);
+    const ini=(c.fullname||c.username||'?')[0].toUpperCase();
+    const [cl1,cl2]=acol(c.username||c.fullname||'x');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div class="list-name-cell"><div class="list-avatar"><div class="avatar-fallback" style="background:linear-gradient(145deg,${cl1},${cl2})">${ini}</div>${c.avatarUrl?`<img loading="lazy" src="https://wsrv.nl/?url=${encodeURIComponent(c.avatarUrl)}&w=80&h=80&fit=cover&default=1" onerror="this.remove()">`:''}</div><div class="list-name-text"><div class="card-name">${highlight(c.fullname||c.username,q)}</div><div class="card-username">@${esc(c.username)}</div>${w?`<div class="wa-num-inline" onclick="copyWaNum(event,'+${w}',this)" title="点击复制 +${w}">${IC.waSmall}<span class="num">${formatWaNum(w)}</span>${IC.copy}</div>`:''}</div></div></td>
+      <td class="col-country">${c.country?'🌍 '+esc(c.country):''}</td>
+      <td class="col-category"><span class="badge badge-category" title="${esc(c.role)}">${esc(c.role)}</span></td>
+      <td><span class="list-score ${sc}">${c.score}</span></td>
+      <td class="col-followers">${fmt(c.followers)}</td>
+      <td class="col-followers">${fmt(c.posts)}</td>
+      <td class="col-status"><select class="status-select" onchange="D[${gi}].status=this.value;updStats();saveLS()">${['未联系','已发消息','已回复','有意向','已报价','成交','无效'].map(s=>`<option${c.status===s?' selected':''}>${s}</option>`).join('')}</select></td>
+      <td><div class="list-actions">${w?`<a class="contact-btn wa-btn" href="https://wa.me/${w}" target="_blank">${IC.wa}</a>`:`<span class="contact-btn wa-btn disabled">${IC.wa}</span>`} ${c.email?`<a class="contact-btn email-btn" href="mailto:${c.email}">${IC.email}</a>`:`<span class="contact-btn email-btn disabled">${IC.email}</span>`} ${c.profileUrl?`<a class="contact-btn ig-btn" href="${esc(c.profileUrl)}" target="_blank">${IC.ig}</a>`:`<span class="contact-btn ig-btn disabled">${IC.ig}</span>`} ${c.website?`<a class="contact-btn web-btn" href="${esc(c.website)}" target="_blank">${IC.web}</a>`:`<span class="contact-btn web-btn disabled">${IC.web}</span>`}</div></td>`;
+    lb.appendChild(tr);
+  });
+  }
+}
+
+function goPage(p){curPage=p;cards(false);window.scrollTo({top:document.getElementById('toolbar').offsetTop,behavior:'smooth'});}
+
+function updStats(){document.getElementById('sD').textContent=D.filter(c=>c.status!=='未联系').length;document.getElementById('sI').textContent=D.filter(c=>['有意向','已报价','成交'].includes(c.status)).length;}
+function rmFile(n){D.splice(0,D.length,...D.filter(c=>c.src!==n));delete FM[n];saveLS();render();}
+function clearAll(){if(!confirm('确定清空所有数据？此操作不可恢复。'))return;D.length=0;FM={};saveLS();render();}
+
+function toggleExport(e){e.stopPropagation();document.getElementById('exportWrap').classList.toggle('open');}
+document.addEventListener('click',()=>document.getElementById('exportWrap').classList.remove('open'));
+
+function setView(mode){
+  viewMode=mode;
+  document.getElementById('vCard').classList.toggle('active',mode==='card');
+  document.getElementById('vList').classList.toggle('active',mode==='list');
+  cards();
+}
+
+function exportXLSX(){
+  document.getElementById('exportWrap').classList.remove('open');
+  if(!D.length)return;
+  const ws=XLSX.utils.json_to_sheet(D.map(c=>({'用户名':c.username,'全名':c.fullname,'类型':c.role,'评分':c.score,'状态':c.status,'国家':c.country||'','区域':c.region||'','邮箱':c.email,'电话':c.phone,'WhatsApp':waNum(c)||'','城市':c.city,'粉丝':c.followers,'帖子':c.posts,'企业':c.isBiz?'是':'否','简介':c.bio,'官网':c.website,'Instagram':c.profileUrl,'来源':c.src})));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'客户');XLSX.writeFile(wb,'客户开发_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportFilteredXLSX(){
+  document.getElementById('exportWrap').classList.remove('open');
+  if(!lastFiltered.length){alert('当前筛选结果为空');return;}
+  const ws=XLSX.utils.json_to_sheet(lastFiltered.map(c=>({'用户名':c.username,'全名':c.fullname,'类型':c.role,'评分':c.score,'状态':c.status,'国家':c.country||'','区域':c.region||'','邮箱':c.email,'电话':c.phone,'WhatsApp':waNum(c)||'','城市':c.city,'粉丝':c.followers,'帖子':c.posts,'企业':c.isBiz?'是':'否','简介':c.bio,'官网':c.website,'Instagram':c.profileUrl,'来源':c.src})));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'筛选结果');XLSX.writeFile(wb,'筛选结果_'+lastFiltered.length+'条_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportHTML(){
+  document.getElementById('exportWrap').classList.remove('open');
+  if(!D.length)return;
+  const clone=document.documentElement.cloneNode(true);
+  // Strip interactive-only elements (keep .copy-toast for copy feedback)
+  clone.querySelectorAll('input[type=file],script,.drop-zone,.modal-overlay,.export-wrap,.btn-danger,.btn-primary,.geo-panel,.vcf-panel,#btnToggleGeo,#btnToggleVcf,.view-toggle').forEach(el=>el.remove());
+  // Remove xlsx script
+  clone.querySelectorAll('script[src]').forEach(el=>el.remove());
+  // Show toolbar
+  const tb=clone.querySelector('#toolbar');if(tb)tb.style.display='flex';
+  // Add readonly script + copy functionality
+  const s=document.createElement('script');
+  s.textContent=`function copyWaNum(ev,text,rowEl){ev&&ev.stopPropagation();navigator.clipboard.writeText(text).then(()=>{const t=document.getElementById('toast');if(!t)return;t.textContent='✅ 已复制 '+text;t.classList.add('show');setTimeout(()=>{t.classList.remove('show');t.textContent='✅ 已复制';},1400);if(rowEl){rowEl.classList.add('copied');setTimeout(()=>rowEl.classList.remove('copied'),1000);}}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();});}
+document.querySelectorAll('.status-select').forEach(s=>{s.disabled=true;s.style.opacity='.6'});document.querySelectorAll('.search-box,select.filter-select').forEach(el=>{el.disabled=true;el.style.opacity='.5'});document.title='Blue\\'s Workbench - ${D.length}条客户 - '+new Date().toISOString().slice(0,10);`;
+  clone.querySelector('body').appendChild(s);
+  const html='<!DOCTYPE html>\\n'+clone.outerHTML;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='客户报告_'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+document.getElementById('fileInput').addEventListener('change',e=>{load(e.target.files);e.target.value='';});
+document.body.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropZone').classList.add('dragover');});
+document.body.addEventListener('dragleave',()=>document.getElementById('dropZone').classList.remove('dragover'));
+document.body.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const fs=[...e.dataTransfer.files].filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));if(fs.length)load(fs);});
+['searchBox','fStatus','fRole','fContact','fSort'].forEach(id=>document.getElementById(id).addEventListener(id==='searchBox'?'input':'change',cards));
+
+function toggleGeoPanel(){
+  const p=document.getElementById('geoPanel');
+  p.classList.toggle('hidden');
+  const btn=document.getElementById('btnToggleGeo');
+  btn.classList.toggle('geo-active-tag',!p.classList.contains('hidden'));
+}
+
+function renderGeoPanel(){
+  const countryCount={};let noCountryCount=0;
+  D.forEach(c=>{if(c.country)countryCount[c.country]=(countryCount[c.country]||0)+1;else noCountryCount++;});
+  const allCountries=Object.keys(countryCount);
+  if(!geoInited&&allCountries.length){selCountries=new Set(allCountries);selNoCountry=true;geoInited=true;}
+
+  const regionData={};
+  allCountries.forEach(country=>{
+    const region=getRegion(country);
+    if(!regionData[region])regionData[region]={countries:[],total:0};
+    regionData[region].countries.push(country);
+    regionData[region].total+=countryCount[country];
+  });
+
+  const grid=document.getElementById('regionGrid');
+  grid.innerHTML='';
+  Object.entries(regionData).sort((a,b)=>b[1].total-a[1].total).forEach(([region,data])=>{
+    data.countries.sort((a,b)=>(countryCount[b]||0)-(countryCount[a]||0));
+    const allSel=data.countries.every(c=>selCountries.has(c));
+    const someSel=data.countries.some(c=>selCountries.has(c));
+    const card=document.createElement('div');
+    card.className='region-card'+(allSel?' all-selected':someSel?' partial-selected':'');
+    card.innerHTML=`
+      <div class="region-header" data-region="${region}">
+        <div class="region-check">${allSel?'✓':someSel?'—':''}</div>
+        <div class="region-name">${region}</div>
+        <div class="region-count">${data.total} 人</div>
+      </div>
+      <div class="country-chips">
+        ${data.countries.map(c=>`<div class="country-chip${selCountries.has(c)?' selected':''}" data-country="${c}">${c} <span class="chip-count">${countryCount[c]}</span></div>`).join('')}
+      </div>`;
+    card.querySelector('.region-header').addEventListener('click',()=>{
+      const shouldSelect=!data.countries.every(c=>selCountries.has(c));
+      data.countries.forEach(c=>{if(shouldSelect)selCountries.add(c);else selCountries.delete(c);});
+      renderGeoPanel();cards();
+    });
+    card.querySelectorAll('.country-chip').forEach(chip=>{
+      chip.addEventListener('click',e=>{
+        e.stopPropagation();
+        const country=chip.dataset.country;
+        if(selCountries.has(country))selCountries.delete(country);else selCountries.add(country);
+        renderGeoPanel();cards();
+      });
+    });
+    grid.appendChild(card);
+  });
+
+  // "未识别" group for contacts without country
+  if(noCountryCount>0){
+    const card=document.createElement('div');
+    card.className='region-card'+(selNoCountry?' all-selected':'');
+    card.innerHTML=`
+      <div class="region-header">
+        <div class="region-check">${selNoCountry?'✓':''}</div>
+        <div class="region-name" style="color:var(--text3)">未识别</div>
+        <div class="region-count">${noCountryCount} 人</div>
+      </div>
+      <div class="country-chips"><div class="country-chip${selNoCountry?' selected':''}" style="color:var(--text3)">无电话/国家 <span class="chip-count">${noCountryCount}</span></div></div>`;
+    card.addEventListener('click',()=>{selNoCountry=!selNoCountry;renderGeoPanel();cards();});
+    grid.appendChild(card);
+  }
+  updateGeoInfo();
+}
+
+function updateGeoInfo(){
+  const allCountriesInData=new Set(D.map(c=>c.country).filter(Boolean));
+  const selCount=D.filter(c=>c.country&&selCountries.has(c.country)).length;
+  document.getElementById('geoInfo').textContent=`已选 ${selCountries.size}/${allCountriesInData.size} 个国家，${selCount} 人`;
+  // Update toggle button appearance
+  const btn=document.getElementById('btnToggleGeo');
+  if(selCountries.size<allCountriesInData.size&&selCountries.size>0){
+    btn.textContent=`🌍 国家筛选 (${selCountries.size})`;
+    btn.classList.add('geo-active-tag');
+  }else{
+    btn.textContent='🌍 国家筛选';
+  }
+}
+
+function geoAll(){
+  D.forEach(c=>{if(c.country)selCountries.add(c.country);});
+  selNoCountry=true;
+  renderGeoPanel();cards();
+}
+function geoNone(){
+  selCountries.clear();selNoCountry=false;
+  renderGeoPanel();cards();
+}
+function geoInvert(){
+  const allC=new Set(D.map(c=>c.country).filter(Boolean));
+  const nw=new Set([...allC].filter(c=>!selCountries.has(c)));
+  selCountries=nw;selNoCountry=!selNoCountry;
+  renderGeoPanel();cards();
+}
+// ===== VCF Export =====
+let vcfSel=new Set(),vcfCountries={},vcfInited=false;
+
+function escV(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n').replace(/\r/g,'');}
+
+// 导出当天日期，格式 YYMMDD（年月日），如 260703
+function vcfDateStr(){
+  const d=new Date();
+  return String(d.getFullYear()%100).padStart(2,'0')+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+}
+
+function buildVcfContacts(){
+  // Only contacts with phone/whatsapp; name = 日期 国家 名字
+  const dt=vcfDateStr();
+  const list=[];
+  D.forEach(c=>{
+    const w=waNum(c);
+    if(!w)return;
+    const country=c.country||'';
+    const company=(c.fullname||c.username||'').trim();
+    const contactName=dt+' '+(country?country+' ':'')+(company||'Unknown');
+    list.push({_phone:'+'+w,_country:country,_company:company,_contactName:contactName,_ckey:country||'未识别'});
+  });
+  return list;
+}
+
+function genVcf(contacts){
+  let v='';
+  contacts.forEach(c=>{
+    const nm=escV(c._contactName),co=escV(c._country),cp=escV(c._company);
+    v+='BEGIN:VCARD\r\nVERSION:3.0\r\n';
+    v+='N:'+nm+';;;;\r\n';
+    v+='FN:'+nm+'\r\n';
+    v+='TEL;TYPE=CELL:'+c._phone+'\r\n';
+    if(cp&&co)v+='ORG:'+co+' '+cp+'\r\n';
+    else if(cp)v+='ORG:'+cp+'\r\n';
+    else if(co)v+='ORG:'+co+'\r\n';
+    if(co)v+='NOTE:'+co+'\r\n';
+    v+='END:VCARD\r\n';
+  });
+  return v;
+}
+
+function dlVcf(content,filename){
+  const blob=new Blob([content],{type:'text/vcard;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+}
+
+function renderVcfPanel(){
+  const contacts=buildVcfContacts();
+  vcfCountries={};
+  contacts.forEach(c=>{if(!vcfCountries[c._ckey])vcfCountries[c._ckey]=[];vcfCountries[c._ckey].push(c);});
+  const keys=Object.keys(vcfCountries);
+  if(!vcfInited&&keys.length){vcfSel=new Set(keys);vcfInited=true;}
+  // Drop selections for countries that no longer exist
+  [...vcfSel].forEach(k=>{if(!vcfCountries[k])vcfSel.delete(k);});
+
+  const grid=document.getElementById('vcfRegionGrid');
+  grid.innerHTML='';
+  if(!contacts.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:28px;color:var(--text3);font-size:13px">暂无可导出的联系人（需要有 WhatsApp 或电话号码）</div>';
+    document.getElementById('vcfFormatPreview').textContent='—';
+    document.getElementById('btnVcfAll').disabled=true;
+    document.getElementById('btnVcfSelected').disabled=true;
+    document.getElementById('btnVcfSelected').textContent='下载选中国家';
+    document.getElementById('vcfInfo').textContent='';
+    return;
+  }
+  // Format preview based on first contact
+  document.getElementById('vcfFormatPreview').textContent='预览：'+contacts[0]._contactName+'  —  '+contacts[0]._phone;
+
+  Object.entries(vcfCountries).sort((a,b)=>b[1].length-a[1].length).forEach(([country,items])=>{
+    const card=document.createElement('div');
+    const isSel=vcfSel.has(country);
+    const region=country!=='未识别'?(getRegion(country)||'其他'):'—';
+    card.className='vcf-region-card'+(isSel?' selected':'');
+    card.dataset.country=country;
+    card.innerHTML='<div class="vcf-region-check">'+(isSel?'✓':'')+'</div>'+
+      '<div class="vcf-region-name">'+esc(country)+'</div>'+
+      '<div class="vcf-region-count">'+items.length+' 人</div>'+
+      '<div class="vcf-region-countries">'+esc(region)+'</div>';
+    card.addEventListener('click',()=>{
+      if(vcfSel.has(country))vcfSel.delete(country);else vcfSel.add(country);
+      renderVcfPanel();
+    });
+    grid.appendChild(card);
+  });
+  updateVcfInfo();
+}
+
+function updateVcfInfo(){
+  const total=Object.values(vcfCountries).reduce((s,a)=>s+a.length,0);
+  let n=0;vcfSel.forEach(k=>{if(vcfCountries[k])n+=vcfCountries[k].length;});
+  document.getElementById('vcfInfo').textContent='已选 '+vcfSel.size+'/'+Object.keys(vcfCountries).length+' 个国家，'+n+' 人 / 共 '+total+' 人';
+  const btnSel=document.getElementById('btnVcfSelected'),btnAll=document.getElementById('btnVcfAll');
+  btnSel.disabled=!n;
+  btnSel.textContent=n?('下载选中 '+vcfSel.size+' 个国家（'+n+' 人）'):'请选择国家';
+  btnAll.disabled=!total;
+  btnAll.textContent='全部下载（'+total+' 人）';
+  // Toolbar button indicator
+  const btn=document.getElementById('btnToggleVcf');
+  btn.textContent=total?('📇 VCF 导出 ('+total+')'):'📇 VCF 导出';
+}
+
+function vcfAll(){vcfSel=new Set(Object.keys(vcfCountries));renderVcfPanel();}
+function vcfNone(){vcfSel.clear();renderVcfPanel();}
+function vcfInvert(){const nw=new Set(Object.keys(vcfCountries).filter(k=>!vcfSel.has(k)));vcfSel=nw;renderVcfPanel();}
+
+function downloadVcfAll(){
+  const contacts=buildVcfContacts();
+  if(!contacts.length)return;
+  dlVcf(genVcf(contacts),vcfDateStr()+'_全部_'+contacts.length+'人.vcf');
+}
+
+function downloadVcfSelected(){
+  if(!vcfSel.size)return;
+  let list=[];vcfSel.forEach(k=>{if(vcfCountries[k])list.push(...vcfCountries[k]);});
+  if(!list.length)return;
+  const ks=[...vcfSel];
+  const label=ks.length<=3?ks.join('+'):ks.length+'个国家';
+  dlVcf(genVcf(list),vcfDateStr()+'_'+label+'_'+list.length+'人.vcf');
+}
+
+function toggleVcfPanel(){
+  const p=document.getElementById('vcfPanel');
+  p.classList.toggle('hidden');
+  const btn=document.getElementById('btnToggleVcf');
+  btn.classList.toggle('geo-active-tag',!p.classList.contains('hidden'));
+  if(!p.classList.contains('hidden'))renderVcfPanel();
+}
+
+
+loadLS();
+</script>
+</body>
+</html>
