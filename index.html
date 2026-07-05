@@ -295,7 +295,7 @@ body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
 </head>
 <body>
 <div class="header">
-  <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench <small style="font-size:12px;color:var(--accent);font-style:normal;vertical-align:middle;margin-left:6px;padding:2px 6px;background:rgba(37,211,102,0.1);border-radius:6px;border:1px solid rgba(37,211,102,0.3)">v2.6 极速修复版</small></span></h1></div>
+  <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench <small style="font-size:12px;color:var(--accent);font-style:normal;vertical-align:middle;margin-left:6px;padding:2px 6px;background:rgba(37,211,102,0.1);border-radius:6px;border:1px solid rgba(37,211,102,0.3)">v2.7 终极防屏蔽版</small></span></h1></div>
   <div class="header-actions">
     <button class="btn" onclick="toggleTheme()" title="切换深海黄昏/日间模式">🌅 <span id="themeText">黄昏模式</span></button>
     <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv,.txt,.tsv,*/*" multiple hidden id="fileInput"></label>
@@ -491,7 +491,11 @@ function norm(r,src){
 }
 
 async function load(files){
+  let totalReadCount = 0;
+  let totalNewCount = 0;
+  let lastFileName = '';
   for(const f of files){
+    lastFileName = f.name;
     try{
       const buf=await f.arrayBuffer();
       let wb;
@@ -502,6 +506,7 @@ async function load(files){
         wb=XLSX.read(txt,{type:'string'});
       }
       const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      totalReadCount += rows.length;
       const ids=new Set(D.map(c=>c.id));
       let n=0;
       rows.forEach(r=>{
@@ -510,19 +515,34 @@ async function load(files){
           D.push(c);
           ids.add(c.id);
           n++;
-          if(c.country) selCountries.add(c.country);
-          else selNoCountry = true;
         }
       });
+      totalNewCount += n;
       FM[f.name]=(FM[f.name]||0)+n;
     }catch(e){
       console.error('Load file error:', e);
       alert('文件解析失败 ['+f.name+']: 请检查表格格式\n错误信息: '+(e.message||e));
     }
   }
-  geoInited=true;
+  
+  // 1. 强制重置所有筛选条件，确保导入或已有的数据100%无死角呈现！
+  const searchBox = document.getElementById('searchBox'); if(searchBox) searchBox.value = '';
+  const fStatus = document.getElementById('fStatus'); if(fStatus) fStatus.value = '';
+  const fRole = document.getElementById('fRole'); if(fRole) fRole.value = '';
+  const fContact = document.getElementById('fContact'); if(fContact) fContact.value = '';
+  const fSort = document.getElementById('fSort'); if(fSort) fSort.value = 'score';
+  
+  // 2. 强制确保地理位置筛选全选
+  selCountries = new Set(D.map(c=>c.country).filter(Boolean));
+  selNoCountry = true;
+  geoInited = true;
+  
   saveLS();
   render();
+  
+  // 3. 弹窗清晰报告结果
+  const dups = totalReadCount - totalNewCount;
+  alert(`🎉 表格导入解析完成！\n\n📁 文件：${lastFileName}\n📊 读取表格数据：共 ${totalReadCount} 条\n✨ 新增客户：${totalNewCount} 条\n♻️ 自动去重：${dups} 条（该表格数据先前已存在于工作台）\n\n📈 当前工作台共展示：${D.length} 条客户数据！\n（注：系统已自动重置所有筛选条件，确保数据100%完整展示）`);
 }
 
 function render(){
