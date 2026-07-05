@@ -458,15 +458,19 @@ function getVal(r, keys){
 
 function norm(r,src){
   const idVal = getVal(r, ['User ID','user_id','id','ID','用户ID','用户 ID','序号']);
+  const usernameVal = String(getVal(r, ['Username','username','用户名','账号','IG用户名','instagram_username'])).trim();
+  const emailVal = String(getVal(r, ['Email','email','E-mail','电子邮箱','邮箱','邮件'])).trim();
+  const phoneVal = String(getVal(r, ['Phone','phone','电话','手机','电话号码','手机号','联系电话'])).trim();
+  const detId = usernameVal ? 'ig_' + usernameVal.toLowerCase() : (emailVal ? 'em_' + emailVal.toLowerCase() : (phoneVal ? 'ph_' + phoneVal : Math.random().toString(36).slice(2)));
   const c = {
-    id: idVal ? String(idVal) : Math.random().toString(36).slice(2),
-    username: String(getVal(r, ['Username','username','用户名','账号','IG用户名','instagram_username'])).trim(),
+    id: idVal ? String(idVal) : detId,
+    username: usernameVal,
     fullname: String(getVal(r, ['Fullname','fullname','Full Name','full_name','全名','姓名','名称','名字'])).trim(),
     posts: parseInt(String(getVal(r, ['Posts','posts','发帖数','帖子','发文'])).replace(/,/g,'')) || 0,
     followers: parseInt(String(getVal(r, ['Followers','followers','粉丝','粉丝数','粉'])).replace(/,/g,'')) || 0,
-    email: String(getVal(r, ['Email','email','E-mail','电子邮箱','邮箱','邮件'])).trim(),
+    email: emailVal,
     phoneCode: String(getVal(r, ['Phone Country Code','phone_country_code','区号','国家区号','电话区号'])).trim(),
-    phone: String(getVal(r, ['Phone','phone','电话','手机','电话号码','手机号','联系电话'])).trim(),
+    phone: phoneVal,
     city: String(getVal(r, ['City','city','城市','所在地','地点'])).trim(),
     verified: /^(YES|TRUE|是|1|T)$/i.test(String(getVal(r, ['Is verified','is_verified','verified','是否认证','认证','蓝V'])).trim()),
     isBiz: /^(YES|TRUE|是|1|T)$/i.test(String(getVal(r, ['Is Business','is_business','business','企业','是否企业号','商业号','企业号'])).trim()),
@@ -506,7 +510,8 @@ async function load(files){
           D.push(c);
           ids.add(c.id);
           n++;
-          if(c.country)selCountries.add(c.country);
+          if(c.country) selCountries.add(c.country);
+          else selNoCountry = true;
         }
       });
       FM[f.name]=(FM[f.name]||0)+n;
