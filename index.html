@@ -234,12 +234,44 @@ td.col-category .badge{font-size:10px;padding:2px 7px;max-width:80px;overflow:hi
 
 @media(max-width:768px){.header,.stats-bar,.toolbar,.cards,.file-tags,.geo-panel,.vcf-panel,.list-wrap{padding-left:16px;padding-right:16px;}.drop-zone{margin:16px;}.cards{grid-template-columns:1fr;}.region-grid,.vcf-region-grid{grid-template-columns:1fr;}.list-table{font-size:12px;}.list-table th,.list-table td{padding:8px 8px;}}
 
+/* 🌅 Deep Sea Sunset / Cyber-Island Dark Mode & Glassmorphism */
+body.dark-mode{
+  --bg:#090D16;--surface:rgba(22, 30, 48, 0.75);--surface2:rgba(30, 41, 65, 0.75);
+  --border:rgba(255, 255, 255, 0.12);--border2:rgba(255, 255, 255, 0.2);
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#64748B;
+  --claude:#FF7A00;--claude-dark:#FF4D00;--claude-light:rgba(255, 122, 0, 0.15);
+  --shadow:0 8px 32px 0 rgba(0, 0, 0, 0.45);
+  --shadow-lg:0 12px 48px 0 rgba(0, 0, 0, 0.6);
+}
+body.dark-mode .header, body.dark-mode .stats-bar, body.dark-mode .toolbar, body.dark-mode .card, body.dark-mode .stat-card, body.dark-mode .filter-bar, body.dark-mode .table-wrap, body.dark-mode .export-menu, body.dark-mode .drop-zone, body.dark-mode .geo-panel, body.dark-mode .vcf-panel{
+  background:var(--surface) !important;
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+}
+body.dark-mode .btn{
+  background:rgba(30, 41, 65, 0.6) !important;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border-color:rgba(255, 255, 255, 0.15) !important;
+  color:#F1F5F9 !important;
+}
+body.dark-mode .btn-primary{
+  background:linear-gradient(135deg, #FF7A00, #EE0979) !important;
+  color:#fff !important; border:none !important;
+  box-shadow:0 4px 14px rgba(255, 122, 0, 0.35) !important;
+}
+body.dark-mode .list-table th{
+  background:rgba(18, 25, 40, 0.85) !important;
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  color:#CBD5E1 !important;
+}
+body.dark-mode .list-table tr:hover{background:rgba(255, 255, 255, 0.05) !important;}
+body.dark-mode .header h1 span{color:#FF7A00 !important;}
 </style>
 </head>
 <body>
 <div class="header">
   <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench</span></h1></div>
   <div class="header-actions">
+    <button class="btn" onclick="toggleTheme()" title="切换深海黄昏/日间模式">🌅 <span id="themeText">黄昏模式</span></button>
     <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv" multiple hidden id="fileInput"></label>
     <div class="export-wrap" id="exportWrap">
       <button class="btn" onclick="toggleExport(event)">📥 导出</button>
@@ -797,6 +829,20 @@ function toggleVcfPanel(){
 }
 
 
+function toggleTheme(){
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('wb_theme', isDark ? 'dark' : 'light');
+  updateThemeBtn();
+}
+function updateThemeBtn(){
+  const isDark = document.body.classList.contains('dark-mode');
+  const txt = document.getElementById('themeText');
+  if(txt) txt.textContent = isDark ? '日间模式' : '黄昏模式';
+}
+if(localStorage.getItem('wb_theme') === 'dark'){
+  document.body.classList.add('dark-mode');
+  updateThemeBtn();
+}
 loadLS();
 </script>
 </body>
