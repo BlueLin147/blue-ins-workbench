@@ -24,7 +24,7 @@
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 36px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .header-left{display:flex;align-items:center;gap:14px;}
-.header-logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,var(--claude),var(--claude-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:600;}
+.header-logo{width:36px;height:36px;border-radius:10px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.15);flex-shrink:0;}
 .header h1{font-family:'Instrument Serif',serif;font-size:22px;font-weight:400;letter-spacing:-.3px;}
 .header h1 span{font-style:italic;color:var(--claude-dark);}
 .header-actions{display:flex;gap:8px;}
@@ -238,7 +238,7 @@ td.col-category .badge{font-size:10px;padding:2px 7px;max-width:80px;overflow:hi
 </head>
 <body>
 <div class="header">
-  <div class="header-left"><div class="header-logo">B</div><h1>Blue's <span>Workbench</span></h1></div>
+  <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench</span></h1></div>
   <div class="header-actions">
     <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv" multiple hidden id="fileInput"></label>
     <div class="export-wrap" id="exportWrap">
