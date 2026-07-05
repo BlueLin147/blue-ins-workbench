@@ -298,7 +298,7 @@ body.dark-mode .bi-panel, body.dark-mode .bi-card, body.dark-mode .bi-vip-card{
   <div class="header-left"><img src="./coconut.jpg" class="header-logo" alt="logo"><h1>Blue's <span>Workbench</span></h1></div>
   <div class="header-actions">
     <button class="btn" onclick="toggleTheme()" title="切换深海黄昏/日间模式">🌅 <span id="themeText">黄昏模式</span></button>
-    <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv" multiple hidden id="fileInput"></label>
+    <label class="btn btn-primary">📂 导入文件<input type="file" accept=".xlsx,.xls,.csv,.txt,.tsv,*/*" multiple hidden id="fileInput"></label>
     <div class="export-wrap" id="exportWrap">
       <button class="btn" onclick="toggleExport(event)">📥 导出</button>
       <div class="export-menu">
@@ -443,10 +443,12 @@ function copyWaNum(ev,text,rowEl){
 }
 
 function getVal(r, keys){
+  const clean = s => String(s).replace(/^[\uFEFF\s]+|[\s\uFEFF]+$/g, '').replace(/^["']|["']$/g, '').trim().toLowerCase();
   for(const k of keys){
     if(r[k] !== undefined && r[k] !== null && r[k] !== '') return r[k];
+    const target = clean(k);
     for(const rk of Object.keys(r)){
-      if(rk.trim().toLowerCase() === k.toLowerCase()){
+      if(clean(rk) === target){
         if(r[rk] !== undefined && r[rk] !== null && r[rk] !== '') return r[rk];
       }
     }
@@ -694,7 +696,7 @@ document.querySelectorAll('.status-select').forEach(s=>{s.disabled=true;s.style.
 document.getElementById('fileInput').addEventListener('change',e=>{load(e.target.files);e.target.value='';});
 document.body.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropZone').classList.add('dragover');});
 document.body.addEventListener('dragleave',()=>document.getElementById('dropZone').classList.remove('dragover'));
-document.body.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const fs=[...e.dataTransfer.files].filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));if(fs.length)load(fs);});
+document.body.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const fs=[...e.dataTransfer.files];if(fs.length)load(fs);});
 ['searchBox','fStatus','fRole','fContact','fSort'].forEach(id=>document.getElementById(id).addEventListener(id==='searchBox'?'input':'change',cards));
 
 function toggleGeoPanel(){
