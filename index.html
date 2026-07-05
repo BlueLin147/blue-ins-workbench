@@ -265,6 +265,185 @@ body.dark-mode .list-table th{
 }
 body.dark-mode .list-table tr:hover{background:rgba(255, 255, 255, 0.05) !important;}
 body.dark-mode .header h1 span{color:#FF7A00 !important;}
+
+/* 💡 Floating outreach guide button */
+.float-guide-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 180;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.float-guide-btn:hover {
+  transform: scale(1.1) rotate(10deg);
+  border-color: var(--claude);
+  box-shadow: 0 8px 24px rgba(212, 162, 127, 0.25);
+}
+body.dark-mode .float-guide-btn:hover {
+  box-shadow: 0 8px 24px rgba(255, 122, 0, 0.25);
+}
+
+/* Drawer Back overlay */
+.drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  z-index: 240;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.drawer-overlay.active {
+  display: block;
+  opacity: 1;
+}
+body.dark-mode .drawer-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Drawer Panel */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 90vw;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  z-index: 250;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+}
+body.dark-mode .drawer {
+  background: rgba(9, 13, 22, 0.85);
+}
+.drawer.active {
+  transform: translateX(0);
+}
+.drawer-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.drawer-header h2 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.drawer-header h2 span {
+  font-style: italic;
+  color: var(--claude-dark);
+}
+.drawer-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text2);
+  transition: color 0.15s;
+}
+.drawer-close:hover {
+  color: var(--red);
+}
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+.guide-sec-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--claude-dark);
+  margin-bottom: 16px;
+}
+.guide-highlights {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.gh-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  text-align: left;
+}
+.gh-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.gh-info h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.gh-info p {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+/* Timeline */
+.timeline {
+  position: relative;
+  padding-left: 20px;
+  border-left: 2px dashed var(--border);
+  margin-left: 10px;
+  text-align: left;
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 28px;
+}
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+.timeline-dot {
+  position: absolute;
+  left: -27px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--claude);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--claude-light);
+}
+.timeline-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.timeline-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
 </style>
 </head>
 <body>
@@ -839,11 +1018,84 @@ function updateThemeBtn(){
   const txt = document.getElementById('themeText');
   if(txt) txt.textContent = isDark ? '日间模式' : '黄昏模式';
 }
+function toggleGuide(show){
+  const overlay = document.getElementById('guideOverlay');
+  const drawer = document.getElementById('guideDrawer');
+  if(show){
+    overlay.classList.add('active');
+    drawer.classList.add('active');
+  } else {
+    overlay.classList.remove('active');
+    drawer.classList.remove('active');
+  }
+}
 if(localStorage.getItem('wb_theme') === 'dark'){
   document.body.classList.add('dark-mode');
   updateThemeBtn();
 }
 loadLS();
 </script>
+
+<!-- Floating Action Button -->
+<button class="float-guide-btn" onclick="toggleGuide(true)" title="极速获客指南">💡</button>
+
+<!-- Guide Drawer Overlay & Panel -->
+<div class="drawer-overlay" id="guideOverlay" onclick="toggleGuide(false)"></div>
+<div class="drawer" id="guideDrawer">
+  <div class="drawer-header">
+    <h2>💡 Blue's <span>获客秘籍</span></h2>
+    <button class="drawer-close" onclick="toggleGuide(false)">✕</button>
+  </div>
+  <div class="drawer-content">
+    <div class="guide-sec-title">🌟 产品核心亮点</div>
+    <div class="guide-highlights">
+      <div class="gh-card">
+        <div class="gh-icon">🎯</div>
+        <div class="gh-info">
+          <h4>BlueIGFinder 靶向采集</h4>
+          <p>自动提取竞品粉丝或特定行业关键词，生成包含邮箱、WhatsApp 的结构化表格。</p>
+        </div>
+      </div>
+      <div class="gh-card">
+        <div class="gh-icon">⚡</div>
+        <div class="gh-info">
+          <h4>去重合并 & 本地极速</h4>
+          <p>多批次表格直接拖入，系统自动智能合并与去重，无任何网络延迟与插件限制。</p>
+        </div>
+      </div>
+      <div class="gh-card">
+        <div class="gh-icon">👑</div>
+        <div class="gh-info">
+          <h4>智能线索评分 & VCF</h4>
+          <p>独创评分模型秒速筛出高意向客户；一键导出国别 VCF 批量存入手机激活 WhatsApp。</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="guide-sec-title">🔄 极速获客四步流</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-title">第一步：靶向采集 (抓取)</div>
+        <div class="timeline-desc">运行 BlueIGFinder，批量抓取目标客群的 Instagram 原始信息并导出为 Excel 表格。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-title">第二步：拖入工作台 (清洗)</div>
+        <div class="timeline-desc">将 Excel 拖入此页面。系统瞬间完成多文件合并去重，并对客户资料进行智能国家定位。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-title">第三步：价值评分 (精筛)</div>
+        <div class="timeline-desc">点击排序选择“按评分”，系统将把拥有有效 WhatsApp、邮箱且高权重的高价值客户排在最前（得分 &gt; 80）。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-title">第四步：极速开发 (触达)</div>
+        <div class="timeline-desc">在下方“VCF导出”勾选国家并下载，导入手机直接裂变开发 WA 好友；或对有邮箱的客户直接点卡片发信。</div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
