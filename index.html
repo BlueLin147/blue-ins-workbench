@@ -35,6 +35,34 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);}
 .btn-accent:hover{background:var(--accent-dark);}
 .btn-danger{background:transparent;color:var(--red);border-color:var(--red);}
+/* ===== AI 富集 / 开发信 ===== */
+.card.card-target{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,var(--shadow);}
+.badge-target{background:var(--accent);color:#fff;}
+.badge-ai{background:var(--purple);color:#fff;}
+.ai-reason{font-size:11.5px;color:var(--text2);margin-top:8px;padding:7px 10px;background:var(--surface2);border-radius:8px;line-height:1.5;}
+.card-products{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.card-products .pchip{font-size:10.5px;padding:2px 7px;background:var(--claude-light);color:var(--claude-dark);border-radius:5px;}
+.draft-btn{cursor:pointer;border:1px solid var(--purple);color:var(--purple);background:transparent;}
+.draft-btn:hover{background:var(--purple);color:#fff;}
+.ai-mask{display:none;position:fixed;inset:0;background:rgba(26,20,16,.45);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.ai-mask.show{display:flex;}
+.ai-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:520px;max-height:86vh;overflow:auto;padding:24px;}
+.ai-box h3{font-family:'Instrument Serif',serif;font-size:20px;font-weight:400;margin-bottom:4px;}
+.ai-box .sub{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5;}
+.ai-input,.ai-textarea{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;color:var(--text);outline:none;margin-top:4px;}
+.ai-textarea{min-height:70px;resize:vertical;line-height:1.5;}
+.ai-input:focus,.ai-textarea:focus{border-color:var(--claude);}
+.ai-label{font-size:12px;font-weight:600;color:var(--text2);margin-top:14px;display:block;}
+.ai-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+.ai-prog{display:none;position:fixed;inset:0;background:rgba(26,20,16,.45);z-index:320;align-items:center;justify-content:center;}
+.ai-prog.show{display:flex;}
+.ai-prog-box{background:var(--surface);border-radius:16px;padding:28px 32px;width:360px;max-width:90vw;box-shadow:var(--shadow-lg);text-align:center;}
+.ai-prog-track{height:8px;background:var(--surface2);border-radius:6px;overflow:hidden;margin:16px 0 10px;}
+.ai-prog-bar{height:100%;width:0;background:linear-gradient(90deg,var(--claude),var(--accent));transition:width .3s;}
+.draft-loading{padding:30px;text-align:center;color:var(--text2);font-size:13px;}
+.draft-field-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:12px;display:block;}
+.draft-subject{padding:10px 12px;background:var(--surface2);border-radius:8px;font-weight:600;margin-top:4px;font-size:14px;}
+.draft-textarea{width:100%;min-height:200px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;line-height:1.6;color:var(--text);margin-top:4px;resize:vertical;}
 .export-wrap{position:relative;}
 .export-menu{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);overflow:hidden;z-index:150;min-width:170px;}
 .export-wrap.open .export-menu{display:block;}
@@ -460,6 +488,8 @@ body.dark-mode .drawer {
         <button onclick="exportFilteredXLSX()">📋 导出筛选结果 Excel</button>
       </div>
     </div>
+    <button class="btn btn-primary" onclick="aiEnrichAll()" title="用 DeepSeek 批量富集分级">🤖 AI 富集</button>
+    <button class="btn" onclick="aiOpenSettings()" title="AI 设置（后端 / 口令 / 我方简介）">⚙️</button>
     <button class="btn btn-danger" onclick="clearAll()">清空</button>
   </div>
 </div>
@@ -475,7 +505,7 @@ body.dark-mode .drawer {
   <select class="filter-select" id="fStatus"><option value="">全部状态</option><option>未联系</option><option>已发消息</option><option>已回复</option><option>有意向</option><option>已报价</option><option>成交</option><option>无效</option></select>
   <select class="filter-select" id="fRole"><option value="">全部类型</option></select>
   <select class="filter-select" id="fContact"><option value="">联系方式</option><option value="wa">有WhatsApp</option><option value="em">有邮箱</option><option value="ph">有电话</option><option value="web">有网站</option></select>
-  <select class="filter-select" id="fSort"><option value="score">按评分</option><option value="followers">按粉丝</option><option value="posts">按帖子</option><option value="name">按名称</option></select>
+  <select class="filter-select" id="fSort"><option value="score">按评分</option><option value="ai">按AI意向分</option><option value="target">🎯目标优先</option><option value="followers">按粉丝</option><option value="posts">按帖子</option><option value="name">按名称</option></select>
   <span class="filter-count" id="filterCount"></span>
   <button class="btn" id="btnToggleGeo" onclick="toggleGeoPanel()" style="margin-left:auto">🌍 国家筛选</button>
   <button class="btn" id="btnToggleVcf" onclick="toggleVcfPanel()">📇 VCF 导出</button>
@@ -517,6 +547,42 @@ body.dark-mode .drawer {
 <div class="empty-state" id="empty" style="display:none"><h3>没有匹配的客户</h3><p>试试调整筛选条件</p></div>
 <div class="pagination" id="pagination" style="display:none"></div>
 <div class="copy-toast" id="toast">✅ 已复制</div>
+
+<!-- AI 设置 -->
+<div class="ai-mask" id="aiSettings">
+  <div class="ai-box">
+    <h3>⚙️ AI 设置</h3>
+    <div class="sub">DeepSeek 富集 / 开发信走你的后端代理，API key 在后端配置，这里只填连接信息与我方简介。</div>
+    <label class="ai-label">后端地址</label>
+    <input class="ai-input" id="aiApi" placeholder="https://blue-email-finder.onrender.com">
+    <label class="ai-label">访问口令 x-lc-token（后端设了 ACCESS_TOKEN 才需要，留空=未加口令）</label>
+    <input class="ai-input" id="aiToken" placeholder="留空">
+    <label class="ai-label">我方产品 / 公司简介（开发信用，一句话说清你卖什么、优势）</label>
+    <textarea class="ai-textarea" id="aiSender" placeholder="例：我们是中国骨科植入物工厂，CE/ISO 认证，为海外经销商提供 OEM 与 15 天快速交货"></textarea>
+    <div class="ai-actions"><button class="btn" onclick="aiCloseSettings()">取消</button><button class="btn btn-primary" onclick="aiSaveSettings()">保存</button></div>
+  </div>
+</div>
+<!-- 富集进度 -->
+<div class="ai-prog" id="aiProg">
+  <div class="ai-prog-box">
+    <div style="font-size:15px;font-weight:600">🤖 DeepSeek 富集中</div>
+    <div class="ai-prog-track"><div class="ai-prog-bar" id="aiProgBar"></div></div>
+    <div id="aiProgTxt" style="font-size:12px;color:var(--text2)">准备中…</div>
+  </div>
+</div>
+<!-- 开发信 -->
+<div class="ai-mask" id="aiDraftModal">
+  <div class="ai-box" style="max-width:600px">
+    <h3 id="draftTitle">✍️ 开发信</h3>
+    <div class="sub">DeepSeek 基于客户 bio + 你的产品简介生成，可编辑后复制。</div>
+    <div style="display:flex;gap:8px;align-items:center;margin:10px 0 2px">
+      <span class="ai-label" style="margin:0">语言</span>
+      <select class="filter-select" id="draftLang" onchange="aiRegenDraft()"><option value="en">English</option><option value="zh">中文</option></select>
+    </div>
+    <div id="draftBody"></div>
+    <div class="ai-actions"><button class="btn" onclick="aiCloseDraft()">关闭</button><button class="btn" onclick="aiRegenDraft()">🔄 重新生成</button><button class="btn btn-accent" onclick="aiCopyDraft()">📋 复制</button></div>
+  </div>
+</div>
 
 <script>
 let D=[];let FM={};let selCountries=new Set();let geoInited=false;let viewMode='card';
@@ -638,7 +704,7 @@ function cards(resetPage){
     if(fc==='ph'&&!c.phone&&!c.whatsapp)return false;if(fc==='web'&&!c.website)return false;
     return true;
   });
-  f.sort((a,b)=>so==='score'?b.score-a.score:so==='followers'?b.followers-a.followers:so==='posts'?b.posts-a.posts:(a.fullname||a.username).localeCompare(b.fullname||b.username));
+  f.sort((a,b)=>so==='ai'?((b.aiScore||0)-(a.aiScore||0)):so==='target'?(((b.isTarget?1:0)-(a.isTarget?1:0))||((b.aiScore||0)-(a.aiScore||0))):so==='followers'?b.followers-a.followers:so==='posts'?b.posts-a.posts:so==='name'?(a.fullname||a.username).localeCompare(b.fullname||b.username):b.score-a.score);
   lastFiltered=f;
 
   // Filter count
@@ -680,15 +746,17 @@ function cards(resetPage){
     const w=waNum(c),sc=c.score>=60?'score-high':c.score>=35?'score-mid':'score-low',gi=D.indexOf(c);
     const ini=(c.fullname||c.username||'?')[0].toUpperCase();
     const [cl1,cl2]=acol(c.username||c.fullname||'x');
-    const card=document.createElement('div');card.className='card';
+    const card=document.createElement('div');card.className='card'+(c.isTarget?' card-target':'');
     const avatarWrap=document.createElement('div');avatarWrap.className='avatar-wrap';
     const fb=document.createElement('div');fb.className='avatar-fallback';fb.style.background=`linear-gradient(145deg,${cl1},${cl2})`;fb.textContent=ini;avatarWrap.appendChild(fb);
     if(c.avatarUrl){const img=document.createElement('img');img.loading='lazy';img.src='https://wsrv.nl/?url='+encodeURIComponent(c.avatarUrl)+'&w=150&h=150&fit=cover&default=1';img.onerror=function(){this.remove();};avatarWrap.appendChild(img);}
     card.innerHTML=`<div class="card-top"><div id="_av${gi}"></div><div class="card-info"><div class="card-name">${highlight(c.fullname||c.username,q)}</div><div class="card-username">@${esc(c.username)}</div></div><div class="card-score ${sc}">${c.score}</div></div>
-<div class="card-badges"><span class="badge badge-category">${esc(c.role)}</span>${c.country?`<span class="badge badge-country">🌍${esc(c.country)}</span>`:''}${c.city?`<span class="badge badge-city">📍${highlight(c.city,q)}</span>`:''}${c.verified?'<span class="badge badge-verified">✓ 认证</span>':''}${c.isBiz?'<span class="badge badge-biz">企业</span>':''}</div>
+<div class="card-badges"><span class="badge badge-category">${esc(c.role)}</span>${c.isTarget?'<span class="badge badge-target">🎯 目标</span>':''}${typeof c.aiScore==='number'?`<span class="badge badge-ai">意向 ${c.aiScore}</span>`:''}${c.country?`<span class="badge badge-country">🌍${esc(c.country)}</span>`:''}${c.city?`<span class="badge badge-city">📍${highlight(c.city,q)}</span>`:''}${c.verified?'<span class="badge badge-verified">✓ 认证</span>':''}${c.isBiz?'<span class="badge badge-biz">企业</span>':''}</div>
 ${c.bio?`<div class="card-bio">${highlight(c.bio,q)}</div>`:''}
+${c.aiReason?`<div class="ai-reason">${highlight(c.aiReason,q)}</div>`:''}
+${c.products&&c.products.length?`<div class="card-products">${c.products.slice(0,5).map(p=>`<span class="pchip">${esc(p)}</span>`).join('')}</div>`:''}
 ${w?`<div class="wa-number-row" onclick="copyWaNum(event,'+${w}',this)" title="点击号码或复制图标"><span class="wa-num-icon">${IC.waSmall}</span><span class="wa-num-text">${formatWaNum(w)}</span><button class="wa-copy-btn" onclick="copyWaNum(event,'+${w}',this.parentNode)" title="复制 +${w}">${IC.copy}</button></div>`:''}
-<div class="card-contact">${w?`<a class="contact-btn wa-btn" href="https://wa.me/${w}" target="_blank">${IC.wa} WhatsApp</a>`:''}${c.email?`<a class="contact-btn email-btn" href="mailto:${c.email}">${IC.email} Email</a>`:''}${c.profileUrl?`<a class="contact-btn ig-btn" href="${esc(c.profileUrl)}" target="_blank">${IC.ig} IG</a>`:''}${c.website?`<a class="contact-btn web-btn" href="${esc(c.website)}" target="_blank">${IC.web}</a>`:''}</div>
+<div class="card-contact">${w?`<a class="contact-btn wa-btn" href="https://wa.me/${w}" target="_blank">${IC.wa} WhatsApp</a>`:''}${c.email?`<a class="contact-btn email-btn" href="mailto:${c.email}">${IC.email} Email</a>`:''}${c.profileUrl?`<a class="contact-btn ig-btn" href="${esc(c.profileUrl)}" target="_blank">${IC.ig} IG</a>`:''}${c.website?`<a class="contact-btn web-btn" href="${esc(c.website)}" target="_blank">${IC.web}</a>`:''}<button class="contact-btn draft-btn" onclick="aiDraft(${gi})" title="AI 生成开发信">✍️ 信</button></div>
 <div class="card-footer"><div class="ig-stats"><div class="ig-stat"><span class="ig-num">${fmt(c.posts)}</span><span class="ig-label">posts</span></div><div class="ig-stat"><span class="ig-num">${fmt(c.followers)}</span><span class="ig-label">followers</span></div></div>
 <select class="status-select" onchange="D[${gi}].status=this.value;updStats();saveLS()">${['未联系','已发消息','已回复','有意向','已报价','成交','无效'].map(s=>`<option${c.status===s?' selected':''}>${s}</option>`).join('')}</select></div>`;
     card.querySelector('#_av'+gi).replaceWith(avatarWrap);g.appendChild(card);
@@ -711,7 +779,7 @@ ${w?`<div class="wa-number-row" onclick="copyWaNum(event,'+${w}',this)" title="�
       <td class="col-followers">${fmt(c.followers)}</td>
       <td class="col-followers">${fmt(c.posts)}</td>
       <td class="col-status"><select class="status-select" onchange="D[${gi}].status=this.value;updStats();saveLS()">${['未联系','已发消息','已回复','有意向','已报价','成交','无效'].map(s=>`<option${c.status===s?' selected':''}>${s}</option>`).join('')}</select></td>
-      <td><div class="list-actions">${w?`<a class="contact-btn wa-btn" href="https://wa.me/${w}" target="_blank">${IC.wa}</a>`:`<span class="contact-btn wa-btn disabled">${IC.wa}</span>`} ${c.email?`<a class="contact-btn email-btn" href="mailto:${c.email}">${IC.email}</a>`:`<span class="contact-btn email-btn disabled">${IC.email}</span>`} ${c.profileUrl?`<a class="contact-btn ig-btn" href="${esc(c.profileUrl)}" target="_blank">${IC.ig}</a>`:`<span class="contact-btn ig-btn disabled">${IC.ig}</span>`} ${c.website?`<a class="contact-btn web-btn" href="${esc(c.website)}" target="_blank">${IC.web}</a>`:`<span class="contact-btn web-btn disabled">${IC.web}</span>`}</div></td>`;
+      <td><div class="list-actions">${w?`<a class="contact-btn wa-btn" href="https://wa.me/${w}" target="_blank">${IC.wa}</a>`:`<span class="contact-btn wa-btn disabled">${IC.wa}</span>`} ${c.email?`<a class="contact-btn email-btn" href="mailto:${c.email}">${IC.email}</a>`:`<span class="contact-btn email-btn disabled">${IC.email}</span>`} ${c.profileUrl?`<a class="contact-btn ig-btn" href="${esc(c.profileUrl)}" target="_blank">${IC.ig}</a>`:`<span class="contact-btn ig-btn disabled">${IC.ig}</span>`} ${c.website?`<a class="contact-btn web-btn" href="${esc(c.website)}" target="_blank">${IC.web}</a>`:`<span class="contact-btn web-btn disabled">${IC.web}</span>`}<button class="contact-btn draft-btn" onclick="aiDraft(${gi})" title="AI 开发信">✍️</button></div></td>`;
     lb.appendChild(tr);
   });
   }
@@ -722,6 +790,84 @@ function goPage(p){curPage=p;cards(false);window.scrollTo({top:document.getEleme
 function updStats(){document.getElementById('sD').textContent=D.filter(c=>c.status!=='未联系').length;document.getElementById('sI').textContent=D.filter(c=>['有意向','已报价','成交'].includes(c.status)).length;}
 function rmFile(n){D.splice(0,D.length,...D.filter(c=>c.src!==n));delete FM[n];saveLS();render();}
 function clearAll(){if(!confirm('确定清空所有数据？此操作不可恢复。'))return;D.length=0;FM={};saveLS();render();}
+
+// ==================== DeepSeek AI：富集分级 + 开发信 ====================
+const AI_LS='bw_ai_cfg';
+let AICFG={api:'https://blue-email-finder.onrender.com',token:'',sender:''};
+try{const s=localStorage.getItem(AI_LS);if(s)AICFG=Object.assign(AICFG,JSON.parse(s));}catch(e){}
+function aiSaveCfg(){try{localStorage.setItem(AI_LS,JSON.stringify(AICFG));}catch(e){}}
+function aiToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>{t.classList.remove('show');t.textContent='✅ 已复制';},1800);}
+function aiOpenSettings(){document.getElementById('aiApi').value=AICFG.api||'';document.getElementById('aiToken').value=AICFG.token||'';document.getElementById('aiSender').value=AICFG.sender||'';document.getElementById('aiSettings').classList.add('show');}
+function aiCloseSettings(){document.getElementById('aiSettings').classList.remove('show');}
+function aiSaveSettings(){AICFG.api=(document.getElementById('aiApi').value||'').trim().replace(/\/+$/,'');AICFG.token=(document.getElementById('aiToken').value||'').trim();AICFG.sender=(document.getElementById('aiSender').value||'').trim();aiSaveCfg();aiCloseSettings();aiToast('✅ AI 设置已保存');}
+async function aiCall(path,payload){
+  if(!AICFG.api)throw new Error('未配置后端地址');
+  const r=await fetch(AICFG.api+path,{method:'POST',headers:Object.assign({'content-type':'application/json'},AICFG.token?{'x-lc-token':AICFG.token}:{}),body:JSON.stringify(payload)});
+  const t=await r.text();let j=null;try{j=JSON.parse(t);}catch(e){}
+  if(!r.ok){let m=(j&&(j.error||j.msg))||('HTTP '+r.status);if(j&&j.code==='no_key')m='后端未配置 DEEPSEEK_API_KEY（去 Render 后台加）';throw new Error(m);}
+  return j||{};
+}
+let aiBusy=false;
+async function aiEnrichAll(force){
+  if(aiBusy)return;
+  if(!AICFG.api){aiOpenSettings();return;}
+  const todo=D.map((c,i)=>({c,i})).filter(x=>force||!x.c.aiDone);
+  if(!todo.length){if(confirm('所有客户都已富集过。重新富集全部？'))return aiEnrichAll(true);return;}
+  aiBusy=true;
+  const ov=document.getElementById('aiProg');ov.classList.add('show');
+  const bar=document.getElementById('aiProgBar'),txt=document.getElementById('aiProgTxt');
+  bar.style.width='0%';txt.textContent='准备中…';
+  let done=0,ok=0,tokens=0;const BATCH=20;
+  try{
+    for(let b=0;b<todo.length;b+=BATCH){
+      const slice=todo.slice(b,b+BATCH);
+      const items=slice.map(x=>({id:x.c.id,username:x.c.username,fullname:x.c.fullname,bio:x.c.bio,website:x.c.website,followers:x.c.followers,posts:x.c.posts,category:x.c.category,country:x.c.country,hasEmail:!!x.c.email,hasPhone:!!(x.c.phone||x.c.whatsapp)}));
+      let res;
+      try{res=await aiCall('/ai/enrich',{items});}
+      catch(e){ov.classList.remove('show');aiBusy=false;alert('富集失败：'+e.message);return;}
+      const byId={};(res.results||[]).forEach(r=>{if(r&&r.id!=null)byId[r.id]=r;});
+      slice.forEach(x=>{
+        const r=byId[x.c.id];if(!r||r.__err)return;const c=x.c;
+        if(r.role)c.role=r.role;
+        if(Array.isArray(r.products))c.products=r.products;
+        if(r.country&&!c.country){c.country=r.country;c.region=getRegion(c.country);selCountries.add(c.country);}
+        if(typeof r.intentScore==='number')c.aiScore=Math.max(0,Math.min(100,Math.round(r.intentScore)));
+        c.isTarget=!!r.isTarget;c.aiReason=r.reason||'';c.aiDone=true;ok++;
+      });
+      tokens+=res.tokens||0;done+=slice.length;
+      bar.style.width=Math.round(done/todo.length*100)+'%';
+      txt.textContent='富集中… '+done+'/'+todo.length+'（成功 '+ok+'）';
+      saveLS();
+    }
+    render();
+    txt.textContent='✅ 完成 '+ok+'/'+todo.length+' 条 · 约 '+tokens+' tokens';
+    setTimeout(()=>ov.classList.remove('show'),2000);
+  }finally{aiBusy=false;}
+}
+let draftGi=-1;
+function aiDraft(gi){
+  if(!AICFG.api){aiOpenSettings();return;}
+  const c=D[gi];if(!c)return;draftGi=gi;
+  document.getElementById('aiDraftModal').classList.add('show');
+  document.getElementById('draftTitle').textContent='✍️ 给 '+(c.fullname||c.username||'客户')+' 的开发信';
+  const langSel=document.getElementById('draftLang');
+  if(c.aiDraft){langSel.value=c.aiDraft.lang||'en';aiRenderDraft(c.aiDraft);}
+  else{langSel.value='en';aiGenDraft(gi,'en');}
+}
+async function aiGenDraft(gi,lang){
+  const c=D[gi];if(!c)return;
+  document.getElementById('draftBody').innerHTML='<div class="draft-loading">DeepSeek 正在起草…</div>';
+  try{
+    const res=await aiCall('/ai/draft',{item:{fullname:c.fullname,username:c.username,bio:c.bio,role:c.role,products:c.products,country:c.country},sender:AICFG.sender,lang:lang});
+    const d={subject:res.subject||'',body:res.body||'',lang:res.lang||lang};c.aiDraft=d;saveLS();aiRenderDraft(d);
+  }catch(e){document.getElementById('draftBody').innerHTML='<div class="draft-loading" style="color:var(--red)">生成失败：'+esc(e.message)+'</div>';}
+}
+function aiRenderDraft(d){
+  document.getElementById('draftBody').innerHTML='<label class="draft-field-label">主题 Subject</label><div class="draft-subject" id="dSubj">'+esc(d.subject||'')+'</div><label class="draft-field-label">正文 Body</label><textarea class="draft-textarea" id="dBody">'+esc(d.body||'')+'</textarea>';
+}
+function aiRegenDraft(){if(draftGi>=0)aiGenDraft(draftGi,document.getElementById('draftLang').value);}
+function aiCopyDraft(){const s=document.getElementById('dSubj'),b=document.getElementById('dBody');const txt='Subject: '+(s?s.textContent:'')+'\n\n'+(b?b.value:'');navigator.clipboard.writeText(txt).then(()=>aiToast('✅ 开发信已复制')).catch(()=>{});}
+function aiCloseDraft(){document.getElementById('aiDraftModal').classList.remove('show');draftGi=-1;}
 
 function toggleExport(e){e.stopPropagation();document.getElementById('exportWrap').classList.toggle('open');}
 document.addEventListener('click',()=>document.getElementById('exportWrap').classList.remove('open'));
