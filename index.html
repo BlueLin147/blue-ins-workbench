@@ -63,6 +63,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .draft-field-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:12px;display:block;}
 .draft-subject{padding:10px 12px;background:var(--surface2);border-radius:8px;font-weight:600;margin-top:4px;font-size:14px;}
 .draft-textarea{width:100%;min-height:200px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;line-height:1.6;color:var(--text);margin-top:4px;resize:vertical;}
+.ai-coach-fab{position:fixed;left:22px;bottom:22px;z-index:220;border:1px solid var(--claude);background:var(--claude);color:#fff;box-shadow:var(--shadow-lg);padding:11px 16px;border-radius:24px;}
+.ai-coach-fab:hover{background:var(--claude-dark);border-color:var(--claude-dark);box-shadow:0 6px 18px rgba(26,20,16,.16);}
 .ai-coach-box{max-width:720px;padding:0;overflow:hidden;}
 .ai-coach-head{padding:22px 24px 14px;border-bottom:1px solid var(--border);}
 .ai-coach-main{padding:16px 24px 22px;max-height:70vh;overflow:auto;}
@@ -78,7 +80,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .ai-chip{border:1px solid var(--border);background:var(--surface);border-radius:20px;padding:6px 11px;font-family:inherit;font-size:12px;color:var(--text2);cursor:pointer;}
 .ai-chip:hover{border-color:var(--claude);color:var(--claude-dark);}
 .ai-chat-input{min-height:78px;}
-@media(max-width:760px){.ai-coach-summary{grid-template-columns:1fr}.ai-msg{max-width:100%}}
+@media(max-width:760px){.ai-coach-summary{grid-template-columns:1fr}.ai-msg{max-width:100%}.ai-coach-fab{left:16px;bottom:16px;padding:10px 14px}}
 .export-wrap{position:relative;}
 .export-menu{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);overflow:hidden;z-index:150;min-width:170px;}
 .export-wrap.open .export-menu{display:block;}
@@ -505,11 +507,11 @@ body.dark-mode .drawer {
       </div>
     </div>
     <button class="btn btn-primary" onclick="aiEnrichAll()" title="用 DeepSeek 批量富集分级">🤖 AI 富集</button>
-    <button class="btn" onclick="aiOpenCoach()" title="对话设置富集策略与开发信">💬 AI 对话</button>
     <button class="btn" onclick="aiOpenSettings()" title="AI 设置（后端 / 全局策略 / 我方简介）">⚙️</button>
     <button class="btn btn-danger" onclick="clearAll()">清空</button>
   </div>
 </div>
+<button class="btn ai-coach-fab" onclick="aiOpenCoach()" title="对话设置富集策略与开发信">💬 AI 对话</button>
 <div class="stats-bar">
   <div class="stat-card c1"><div class="num" id="sT">0</div><div class="label">总客户</div></div>
   <div class="stat-card c2"><div class="num" id="sC">0</div><div class="label">可联系</div></div>
