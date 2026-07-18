@@ -63,6 +63,22 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .draft-field-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:12px;display:block;}
 .draft-subject{padding:10px 12px;background:var(--surface2);border-radius:8px;font-weight:600;margin-top:4px;font-size:14px;}
 .draft-textarea{width:100%;min-height:200px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;line-height:1.6;color:var(--text);margin-top:4px;resize:vertical;}
+.ai-coach-box{max-width:720px;padding:0;overflow:hidden;}
+.ai-coach-head{padding:22px 24px 14px;border-bottom:1px solid var(--border);}
+.ai-coach-main{padding:16px 24px 22px;max-height:70vh;overflow:auto;}
+.ai-coach-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px;}
+.ai-coach-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;min-height:74px;}
+.ai-coach-item b{display:block;font-size:11px;color:var(--text3);font-weight:600;margin-bottom:5px;}
+.ai-coach-item span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.45;color:var(--text2);}
+.ai-chat-log{display:flex;flex-direction:column;gap:8px;min-height:180px;max-height:280px;overflow:auto;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
+.ai-msg{max-width:86%;padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.55;white-space:pre-wrap;}
+.ai-msg.user{align-self:flex-end;background:var(--claude);color:#fff;}
+.ai-msg.assistant{align-self:flex-start;background:var(--surface);border:1px solid var(--border);color:var(--text2);}
+.ai-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+.ai-chip{border:1px solid var(--border);background:var(--surface);border-radius:20px;padding:6px 11px;font-family:inherit;font-size:12px;color:var(--text2);cursor:pointer;}
+.ai-chip:hover{border-color:var(--claude);color:var(--claude-dark);}
+.ai-chat-input{min-height:78px;}
+@media(max-width:760px){.ai-coach-summary{grid-template-columns:1fr}.ai-msg{max-width:100%}}
 .export-wrap{position:relative;}
 .export-menu{display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);overflow:hidden;z-index:150;min-width:170px;}
 .export-wrap.open .export-menu{display:block;}
@@ -489,7 +505,8 @@ body.dark-mode .drawer {
       </div>
     </div>
     <button class="btn btn-primary" onclick="aiEnrichAll()" title="用 DeepSeek 批量富集分级">🤖 AI 富集</button>
-    <button class="btn" onclick="aiOpenSettings()" title="AI 设置（后端 / 口令 / 我方简介）">⚙️</button>
+    <button class="btn" onclick="aiOpenCoach()" title="对话设置富集策略与开发信">💬 AI 对话</button>
+    <button class="btn" onclick="aiOpenSettings()" title="AI 设置（后端 / 全局策略 / 我方简介）">⚙️</button>
     <button class="btn btn-danger" onclick="clearAll()">清空</button>
   </div>
 </div>
@@ -552,14 +569,45 @@ body.dark-mode .drawer {
 <div class="ai-mask" id="aiSettings">
   <div class="ai-box">
     <h3>⚙️ AI 设置</h3>
-    <div class="sub">DeepSeek 富集 / 开发信走你的后端代理，API key 在后端配置，这里只填连接信息与我方简介。</div>
+    <div class="sub">DeepSeek 富集 / 对话 / 开发信走你的后端代理，API key 在后端配置，这里主要填连接信息与全局策略。</div>
     <label class="ai-label">后端地址</label>
     <input class="ai-input" id="aiApi" placeholder="https://blue-email-finder.onrender.com">
-    <label class="ai-label">访问口令 x-lc-token（后端设了 ACCESS_TOKEN 才需要，留空=未加口令）</label>
+    <label class="ai-label">访问口令 x-lc-token（AI 功能可留空；LC 采集接口仍可能需要）</label>
     <input class="ai-input" id="aiToken" placeholder="留空">
     <label class="ai-label">我方产品 / 公司简介（开发信用，一句话说清你卖什么、优势）</label>
     <textarea class="ai-textarea" id="aiSender" placeholder="例：我们是中国骨科植入物工厂，CE/ISO 认证，为海外经销商提供 OEM 与 15 天快速交货"></textarea>
+    <label class="ai-label">AI 富集策略（对话模式会自动更新）</label>
+    <textarea class="ai-textarea" id="aiStrategy" placeholder="例：优先找美国/欧洲医疗器械经销商，排除同行工厂；有 WhatsApp、邮箱、官网的加分"></textarea>
+    <label class="ai-label">开发信整体设置（对话模式会自动更新）</label>
+    <textarea class="ai-textarea" id="aiDraftPrefs" placeholder="例：英文，简洁专业，强调 OEM/交期/认证，结尾问是否需要目录，避免夸张承诺"></textarea>
+    <label class="ai-label">默认开发信语言</label>
+    <select class="filter-select" id="aiDraftLang" style="width:100%;margin-top:4px"><option value="en">English</option><option value="zh">中文</option></select>
     <div class="ai-actions"><button class="btn" onclick="aiCloseSettings()">取消</button><button class="btn btn-primary" onclick="aiSaveSettings()">保存</button></div>
+  </div>
+</div>
+<!-- AI 对话模式 -->
+<div class="ai-mask" id="aiCoach">
+  <div class="ai-box ai-coach-box">
+    <div class="ai-coach-head">
+      <h3>💬 AI 对话</h3>
+      <div class="sub">把目标客户、产品、国家、语气和开发信要求说清楚；保存后的策略会用于 AI 富集和开发信。</div>
+    </div>
+    <div class="ai-coach-main">
+      <div class="ai-coach-summary" id="aiCoachSummary"></div>
+      <div class="ai-chat-log" id="aiChatLog"></div>
+      <div class="ai-chip-row">
+        <button class="ai-chip" onclick="aiCoachQuick('我的产品是骨科植入物，优先找海外医疗器械经销商和进口商，排除同行工厂。')">目标客户</button>
+        <button class="ai-chip" onclick="aiCoachQuick('开发信用英文，语气简洁专业，强调 CE/ISO、OEM、快速交货，结尾问是否需要目录。')">开发信口吻</button>
+        <button class="ai-chip" onclick="aiCoachQuick('优先美国、欧洲、中东，有邮箱、WhatsApp、官网的客户意向分加高。')">评分偏好</button>
+      </div>
+      <textarea class="ai-textarea ai-chat-input" id="aiChatInput" placeholder="例如：我们卖牙科耗材，重点找美国和沙特的进口商，开发信英文，少客套，主推低 MOQ 和 7 天打样。"></textarea>
+      <div class="ai-actions">
+        <button class="btn" onclick="aiCloseCoach()">关闭</button>
+        <button class="btn" onclick="aiCoachSaveOnly()">保存设置</button>
+        <button class="btn btn-primary" onclick="aiCoachSend()">发送</button>
+        <button class="btn btn-accent" onclick="aiCoachRun()">按对话富集</button>
+      </div>
+    </div>
   </div>
 </div>
 <!-- 富集进度 -->
@@ -793,13 +841,13 @@ function clearAll(){if(!confirm('确定清空所有数据？此操作不可恢�
 
 // ==================== DeepSeek AI：富集分级 + 开发信 ====================
 const AI_LS='bw_ai_cfg';
-let AICFG={api:'https://blue-email-finder.onrender.com',token:'',sender:''};
+let AICFG={api:'https://blue-email-finder.onrender.com',token:'',sender:'',strategy:'',draftPrefs:'',draftLang:'en',chat:[]};
 try{const s=localStorage.getItem(AI_LS);if(s)AICFG=Object.assign(AICFG,JSON.parse(s));}catch(e){}
 function aiSaveCfg(){try{localStorage.setItem(AI_LS,JSON.stringify(AICFG));}catch(e){}}
 function aiToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>{t.classList.remove('show');t.textContent='✅ 已复制';},1800);}
-function aiOpenSettings(){document.getElementById('aiApi').value=AICFG.api||'';document.getElementById('aiToken').value=AICFG.token||'';document.getElementById('aiSender').value=AICFG.sender||'';document.getElementById('aiSettings').classList.add('show');}
+function aiOpenSettings(){document.getElementById('aiApi').value=AICFG.api||'';document.getElementById('aiToken').value=AICFG.token||'';document.getElementById('aiSender').value=AICFG.sender||'';document.getElementById('aiStrategy').value=AICFG.strategy||'';document.getElementById('aiDraftPrefs').value=AICFG.draftPrefs||'';document.getElementById('aiDraftLang').value=AICFG.draftLang||'en';document.getElementById('aiSettings').classList.add('show');}
 function aiCloseSettings(){document.getElementById('aiSettings').classList.remove('show');}
-function aiSaveSettings(){AICFG.api=(document.getElementById('aiApi').value||'').trim().replace(/\/+$/,'');AICFG.token=(document.getElementById('aiToken').value||'').trim();AICFG.sender=(document.getElementById('aiSender').value||'').trim();aiSaveCfg();aiCloseSettings();aiToast('✅ AI 设置已保存');}
+function aiSaveSettings(){AICFG.api=(document.getElementById('aiApi').value||'').trim().replace(/\/+$/,'');AICFG.token=(document.getElementById('aiToken').value||'').trim();AICFG.sender=(document.getElementById('aiSender').value||'').trim();AICFG.strategy=(document.getElementById('aiStrategy').value||'').trim();AICFG.draftPrefs=(document.getElementById('aiDraftPrefs').value||'').trim();AICFG.draftLang=document.getElementById('aiDraftLang').value||'en';aiSaveCfg();aiCloseSettings();aiToast('✅ AI 设置已保存');}
 async function aiCall(path,payload){
   if(!AICFG.api)throw new Error('未配置后端地址');
   const r=await fetch(AICFG.api+path,{method:'POST',headers:Object.assign({'content-type':'application/json'},AICFG.token?{'x-lc-token':AICFG.token}:{}),body:JSON.stringify(payload)});
@@ -807,6 +855,45 @@ async function aiCall(path,payload){
   if(!r.ok){let m=(j&&(j.error||j.msg))||('HTTP '+r.status);if(j&&j.code==='no_key')m='后端未配置 DEEPSEEK_API_KEY（去 Render 后台加）';throw new Error(m);}
   return j||{};
 }
+function aiCfgShort(v,empty){v=(v||'').trim();return v?esc(v):'<span style="color:var(--text3)">'+empty+'</span>';}
+function aiRenderCoach(){
+  const sum=document.getElementById('aiCoachSummary');
+  const draftSummary=(AICFG.draftPrefs||'').trim()?((AICFG.draftLang==='zh'?'中文':'English')+' · '+AICFG.draftPrefs):'';
+  if(sum)sum.innerHTML='<div class="ai-coach-item"><b>富集策略</b><span>'+aiCfgShort(AICFG.strategy,'还没设置')+'</span></div><div class="ai-coach-item"><b>卖方简介</b><span>'+aiCfgShort(AICFG.sender,'还没设置')+'</span></div><div class="ai-coach-item"><b>开发信</b><span>'+aiCfgShort(draftSummary,'还没设置')+'</span></div>';
+  const log=document.getElementById('aiChatLog');if(!log)return;
+  const msgs=(AICFG.chat&&AICFG.chat.length)?AICFG.chat:[{role:'assistant',text:'告诉我你卖什么、想找谁、开发信要什么口吻。我会把这些整理成全局 AI 策略。'}];
+  log.innerHTML=msgs.map(m=>'<div class="ai-msg '+(m.role==='user'?'user':'assistant')+'">'+esc(m.text||'')+'</div>').join('');
+  log.scrollTop=log.scrollHeight;
+}
+function aiOpenCoach(){if(!AICFG.api)AICFG.api='https://blue-email-finder.onrender.com';aiRenderCoach();document.getElementById('aiCoach').classList.add('show');setTimeout(()=>{const i=document.getElementById('aiChatInput');if(i)i.focus();},80);}
+function aiCloseCoach(){document.getElementById('aiCoach').classList.remove('show');}
+function aiCoachSaveOnly(){aiSaveCfg();aiToast('✅ 对话设置已保存');}
+function aiCoachAdd(role,text){AICFG.chat=(AICFG.chat||[]).concat({role:role,text:text}).slice(-18);aiSaveCfg();aiRenderCoach();}
+function aiCoachQuick(text){document.getElementById('aiChatInput').value=text;aiCoachSend();}
+function aiCoachLocalMerge(text){
+  const line=text.trim();if(!line)return;
+  if(/英文|english|en\b/i.test(line))AICFG.draftLang='en';
+  if(/中文|汉语|zh\b/i.test(line))AICFG.draftLang='zh';
+  AICFG.strategy=[AICFG.strategy,line].filter(Boolean).join('\n').slice(-900);
+  AICFG.draftPrefs=[AICFG.draftPrefs,line].filter(Boolean).join('\n').slice(-900);
+}
+async function aiCoachSend(){
+  const input=document.getElementById('aiChatInput');const text=(input.value||'').trim();if(!text)return;
+  input.value='';aiCoachAdd('user',text);
+  const context=AICFG.chat.slice(-8);
+  aiCoachAdd('assistant','整理中…');
+  const last=AICFG.chat.length-1;
+  try{
+    const res=await aiCall('/ai/coach',{message:text,config:{strategy:AICFG.strategy,sender:AICFG.sender,draftPrefs:AICFG.draftPrefs,draftLang:AICFG.draftLang},messages:context});
+    AICFG.strategy=res.strategy||AICFG.strategy||'';AICFG.sender=res.sender||AICFG.sender||'';AICFG.draftPrefs=res.draftPrefs||AICFG.draftPrefs||'';AICFG.draftLang=res.draftLang||AICFG.draftLang||'en';
+    AICFG.chat[last]={role:'assistant',text:res.reply||'已更新对话设置。'};
+  }catch(e){
+    aiCoachLocalMerge(text);
+    AICFG.chat[last]={role:'assistant',text:'我先把这段要求保存到本地设置里。AI 整理失败：'+e.message};
+  }
+  aiSaveCfg();aiRenderCoach();
+}
+function aiCoachRun(){aiSaveCfg();aiCloseCoach();aiEnrichAll();}
 let aiBusy=false;
 async function aiEnrichAll(force){
   if(aiBusy)return;
@@ -823,7 +910,7 @@ async function aiEnrichAll(force){
       const slice=todo.slice(b,b+BATCH);
       const items=slice.map(x=>({id:x.c.id,username:x.c.username,fullname:x.c.fullname,bio:x.c.bio,website:x.c.website,followers:x.c.followers,posts:x.c.posts,category:x.c.category,country:x.c.country,hasEmail:!!x.c.email,hasPhone:!!(x.c.phone||x.c.whatsapp)}));
       let res;
-      try{res=await aiCall('/ai/enrich',{items});}
+      try{res=await aiCall('/ai/enrich',{items, strategy:AICFG.strategy||''});}
       catch(e){ov.classList.remove('show');aiBusy=false;alert('富集失败：'+e.message);return;}
       const byId={};(res.results||[]).forEach(r=>{if(r&&r.id!=null)byId[r.id]=r;});
       slice.forEach(x=>{
@@ -852,13 +939,13 @@ function aiDraft(gi){
   document.getElementById('draftTitle').textContent='✍️ 给 '+(c.fullname||c.username||'客户')+' 的开发信';
   const langSel=document.getElementById('draftLang');
   if(c.aiDraft){langSel.value=c.aiDraft.lang||'en';aiRenderDraft(c.aiDraft);}
-  else{langSel.value='en';aiGenDraft(gi,'en');}
+  else{langSel.value=AICFG.draftLang||'en';aiGenDraft(gi,AICFG.draftLang||'en');}
 }
 async function aiGenDraft(gi,lang){
   const c=D[gi];if(!c)return;
   document.getElementById('draftBody').innerHTML='<div class="draft-loading">DeepSeek 正在起草…</div>';
   try{
-    const res=await aiCall('/ai/draft',{item:{fullname:c.fullname,username:c.username,bio:c.bio,role:c.role,products:c.products,country:c.country},sender:AICFG.sender,lang:lang});
+    const res=await aiCall('/ai/draft',{item:{fullname:c.fullname,username:c.username,bio:c.bio,role:c.role,products:c.products,country:c.country},sender:AICFG.sender,draftPrefs:AICFG.draftPrefs||'',strategy:AICFG.strategy||'',lang:lang});
     const d={subject:res.subject||'',body:res.body||'',lang:res.lang||lang};c.aiDraft=d;saveLS();aiRenderDraft(d);
   }catch(e){document.getElementById('draftBody').innerHTML='<div class="draft-loading" style="color:var(--red)">生成失败：'+esc(e.message)+'</div>';}
 }
@@ -916,6 +1003,7 @@ document.querySelectorAll('.status-select').forEach(s=>{s.disabled=true;s.style.
 }
 
 document.getElementById('fileInput').addEventListener('change',e=>{load(e.target.files);e.target.value='';});
+document.getElementById('aiChatInput').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')aiCoachSend();});
 document.body.addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dropZone').classList.add('dragover');});
 document.body.addEventListener('dragleave',()=>document.getElementById('dropZone').classList.remove('dragover'));
 document.body.addEventListener('drop',e=>{e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');const fs=[...e.dataTransfer.files].filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));if(fs.length)load(fs);});
