@@ -1132,7 +1132,8 @@ function buildVcfContacts(){
     const country=c.country||'';
     const company=(c.fullname||c.username||'').trim();
     const contactName=dt+' '+(country?country+' ':'')+(company||'Unknown');
-    list.push({_phone:'+'+w,_country:country,_company:company,_contactName:contactName,_ckey:country||'未识别'});
+    const aiScore=Number.isFinite(c.aiScore)?Math.round(c.aiScore):null;
+    list.push({_phone:'+'+w,_country:country,_company:company,_contactName:contactName,_ckey:country||'未识别',_aiScore:aiScore});
   });
   return list;
 }
@@ -1148,7 +1149,8 @@ function genVcf(contacts){
     if(cp&&co)v+='ORG:'+co+' '+cp+'\r\n';
     else if(cp)v+='ORG:'+cp+'\r\n';
     else if(co)v+='ORG:'+co+'\r\n';
-    if(co)v+='NOTE:'+co+'\r\n';
+    const note=[c._aiScore==null?'':String(c._aiScore),c._country||''].filter(Boolean).join(' ');
+    if(note)v+='NOTE:'+escV(note)+'\r\n';
     v+='END:VCARD\r\n';
   });
   return v;
