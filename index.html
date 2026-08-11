@@ -548,7 +548,7 @@ body.dark-mode .drawer {
     <button class="btn-sm" onclick="vcfInvert()">反选</button>
     <span class="vcf-info" id="vcfInfo"></span>
   </div>
-  <div class="vcf-hint">生成 vCard（<code>.vcf</code>）通讯录文件，联系人名格式为 <code>日期 + 国家 + 名字</code>（日期为导出当天，格式年月日，如 <code>260703</code>），备注格式为 <code>意向分 + 国家</code>（如 <code>意向 20 美国</code>）。可单独勾选国家导出。仅包含有 WhatsApp/电话号码的客户。</div>
+  <div class="vcf-hint">生成 vCard（<code>.vcf</code>）通讯录文件，联系人名格式为 <code>意向分 + 日期 + 国家 + 名字</code>（如 <code>意向 20 260703 美国 Alex</code>），备注格式为 <code>意向分 + 国家</code>（如 <code>意向 20 美国</code>）。可单独勾选国家导出。仅包含有 WhatsApp/电话号码的客户。</div>
   <div class="vcf-format-preview" id="vcfFormatPreview">—</div>
   <div class="vcf-region-grid" id="vcfRegionGrid"></div>
   <div class="vcf-actions">
@@ -1132,9 +1132,10 @@ function buildVcfContacts(){
     if(!w)return;
     const country=c.country||'';
     const company=(c.fullname||c.username||'').trim();
-    const contactName=dt+' '+(country?country+' ':'')+(company||'Unknown');
     const aiScore=Number.isFinite(c.aiScore)?Math.round(c.aiScore):null;
-    list.push({_phone:'+'+w,_country:country,_company:company,_contactName:contactName,_ckey:country||'未识别',_aiScore:aiScore});
+    const baseContactName=dt+' '+(country?country+' ':'')+(company||'Unknown');
+    const contactName=(aiScore==null?'':'意向 '+aiScore+' ')+baseContactName;
+    list.push({_phone:'+'+w,_country:country,_company:company,_contactName:contactName,_baseContactName:baseContactName,_ckey:country||'未识别',_aiScore:aiScore});
   });
   return list;
 }
@@ -1186,7 +1187,7 @@ function renderVcfPanel(){
   // Format preview based on first contact
   const first=contacts[0];
   const scoreBadge=first._aiScore==null?'':'<span class="badge badge-ai">意向 '+esc(first._aiScore)+'</span>';
-  document.getElementById('vcfFormatPreview').innerHTML=scoreBadge+'<span>预览：'+esc(first._contactName)+'  —  '+esc(first._phone)+'</span>';
+  document.getElementById('vcfFormatPreview').innerHTML=scoreBadge+'<span>预览：'+esc(first._baseContactName||first._contactName)+'  —  '+esc(first._phone)+'</span>';
 
   Object.entries(vcfCountries).sort((a,b)=>b[1].length-a[1].length).forEach(([country,items])=>{
     const card=document.createElement('div');
